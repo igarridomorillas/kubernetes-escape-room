@@ -47,7 +47,8 @@ kubernetes-escape-room/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
     ├── sessions/
-    │   └── 00-milestones.md         # Milestone tracker & review gates
+    │   ├── 00-milestones.md         # Milestone tracker & review gates
+    │   └── 01-milestone-01.md       # Session 1: Core harness & cluster setup
     ├── ai-prompts-cheatsheet.md     # SRE Copilot Prompt Pattern (coming soon)
     └── pre-workshop-checklist.md    # Instructor & attendee checklist (coming soon)
 ```

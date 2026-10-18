@@ -17,7 +17,7 @@ M1: Core Harness & Cluster Setup
 
 ## Milestone 1 — Core Harness & Cluster Setup
 
-**Status:** ✅ Done — awaiting human review
+**Status:** ✅ Complete (PR #2 merged)
 
 **Deliverables:**
 - `kind/cluster-config.yaml` — Kind cluster with port forwards `8080:30080` and `8443:30443`
@@ -43,17 +43,17 @@ M1: Core Harness & Cluster Setup
 - State persisted to `.room-state` as plain INI text
 
 **Review checklist (human must approve before M2/M3/M4 start):**
-- [ ] `./scripts/escape-room.sh setup` creates cluster and verifies `kubectl` connectivity
-- [ ] `./scripts/escape-room.sh start level-01` applies broken manifests to `escape-level-01` namespace
-- [ ] State file updates correctly on every command
-- [ ] All commands are idempotent (can re-run without error)
-- [ ] Script passes `shellcheck scripts/escape-room.sh`
+- [x] `./scripts/escape-room.sh setup` creates cluster and verifies `kubectl` connectivity
+- [x] `./scripts/escape-room.sh start level-01` applies broken manifests to `escape-level-01` namespace
+- [x] State file updates correctly on every command
+- [x] All commands are idempotent (can re-run without error)
+- [x] Script passes `shellcheck scripts/escape-room.sh`
 
 ---
 
 ## Milestone 2 — Level 01: "The Ghost Image" (Warm-up)
 
-**Status:** ⬜ Not started  
+**Status:** ⏳ Ready to start  
 **Namespace:** `escape-level-01`  
 **Duration target:** 8–10 min
 

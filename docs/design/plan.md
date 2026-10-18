@@ -151,7 +151,7 @@ COMPLETED_LEVELS=
 
 ### 📋 Milestone 1: Core Harness & Cluster Setup
 > **Prompt for Agent 1:**
-> *"Implement the automation harness for the Kubernetes Escape Room at `/Users/unai/.gemini/antigravity/scratch/k8s-escape-room`. Create the `kind/cluster-config.yaml` with port forwards (8080:30080, 8443:30443). Implement `scripts/escape-room.sh` as an executable Bash script supporting `setup`, `start <level>`, `status`, `hint`, `verify`, `solve`, `reset`, and `cleanup`. Ensure zero external dependencies (pure Bash, no jq). Manage state in `.room-state`. Format output with ANSI colors and clear status banners."*
+> *"Implement the automation harness for the Kubernetes Escape Room at the repository root. Create the `kind/cluster-config.yaml` with port forwards (8080:30080, 8443:30443). Implement `scripts/escape-room.sh` as an executable Bash script supporting `setup`, `start <level>`, `status`, `hint`, `verify`, `solve`, `reset`, and `cleanup`. Ensure zero external dependencies (pure Bash, no jq). Manage state in `.room-state`. Format output with ANSI colors and clear status banners."*
 
 ### 📋 Milestone 2: Implement Level 01 ("The Ghost Image")
 > **Prompt for Agent 2:**

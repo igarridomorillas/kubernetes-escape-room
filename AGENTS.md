@@ -42,6 +42,10 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40�
 
 5. **No secrets or credentials** in any manifest, script, or documentation. Simulated `DATABASE_URL` values must be clearly fake (e.g., `postgresql://fake-host:5432/fakedb`).
 
+6. **No absolute or user home paths** in any file. Never commit or write `/Users/<name>`, `/home/<name>`, or machine-specific paths into scripts, manifests, markdown docs, prompts, or links. Always use relative repository paths or environment-agnostic variables.
+
+7. **Script placement and permissions.** CLI tools and automation scripts must live under `scripts/` (no root wrappers or root aliases). Executable scripts must be set to `chmod 750` (`-rwxr-x---`).
+
 ---
 
 ## Directory Layout
@@ -51,7 +55,7 @@ kubernetes-escape-room/
 ├── AGENTS.md                        # ← You are here
 ├── README.md
 ├── scripts/
-│   └── escape-room.sh               # Main CLI harness implementation (executable Bash)
+│   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
 │   └── cluster-config.yaml          # Kind cluster definition
@@ -80,6 +84,9 @@ kubernetes-escape-room/
 └── docs/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
+    ├── sessions/
+    │   ├── 00-milestones.md         # Milestone tracker & review gates
+    │   └── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
     ├── ai-prompts-cheatsheet.md
     └── pre-workshop-checklist.md
 ```
@@ -176,6 +183,14 @@ find scenarios/ -name "*.sh" -exec shellcheck {} \;
 - Wrap long pipelines in functions with descriptive names.
 - No inline `awk` programs longer than 3 lines — extract into a named function.
 
+### Terminal formatting & ASCII art
+
+- **Use open-ended horizontal divider bars** (e.g. `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`) instead of fixed-width 3-sided boxes (`╔══...║`).
+  - *Rationale:* `printf "%-Ns"` pads by byte count, not visual display columns. Multi-byte emojis (`🚀`, `🔥`, `📊`, `🔓`, `♻️` take 4–6 bytes) and unicode symbols (`—`) cause jagged right borders.
+- **ASCII art width constraint:** All ASCII art headers must be designed for a max line width of $\le 78$ columns. This prevents line-wrapping and corrupted art on standard 80-column terminal windows (e.g. macOS Terminal default or split-pane editors).
+- **Multiline banner stacking:** If an ASCII art phrase exceeds 78 columns, stack it into multiline sections (e.g. `K8S    ESCAPE` on row 1, `ROOM` centered beneath it on row 2).
+- **Inspect ASCII letterforms:** Always trace and verify ASCII letters character-by-character to prevent typos or missing letter glyphs.
+
 ### Kubernetes manifests
 
 - Every manifest **must** have `namespace` set explicitly (never rely on default namespace).
@@ -260,6 +275,13 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
     ```
 14. Each milestone should land in its own commit (or small set of related commits). Do not bundle multiple milestones into one commit.
 15. Never commit `.room-state`, cluster kubeconfigs, or any file matching `.gitignore`.
+
+### Post-merge & session documentation
+
+16. **Keep session records synchronized.** When a milestone PR is reviewed and merged:
+    - Update `docs/sessions/00-milestones.md`: mark the milestone status as complete and check off all review checklist items (`[x]`).
+    - Create a session log `docs/sessions/<NN>-milestone-<XX>.md` detailing deliverables, key design iterations, CLI commands, and verification gates.
+    - Keep the directory trees in `README.md` and `AGENTS.md` up to date.
 
 ---
 
