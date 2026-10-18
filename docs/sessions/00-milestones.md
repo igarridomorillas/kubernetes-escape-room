@@ -17,25 +17,25 @@ M1: Core Harness & Cluster Setup
 
 ## Milestone 1 — Core Harness & Cluster Setup
 
-**Status:** ⬜ Not started
+**Status:** ✅ Done — awaiting human review
 
 **Deliverables:**
 - `kind/cluster-config.yaml` — Kind cluster with port forwards `8080:30080` and `8443:30443`
-- `./room` — Executable Bash script (zero external deps, pure POSIX Bash)
+- `scripts/escape-room.sh` — Executable Bash script (zero external deps, pure POSIX Bash)
 - `.room-state` — State file tracking `CURRENT_LEVEL`, `HINT_LEVEL`, `COMPLETED_LEVELS`
 
-**`./room` commands to implement:**
+**`./scripts/escape-room.sh` commands to implement:**
 
 | Command | Behaviour |
 |---|---|
-| `./room setup` | Checks docker, creates kind cluster `escape-room` |
-| `./room start <level>` | Resets namespace, applies broken manifests, shows incident alert |
-| `./room status` | Shows active scenario, pod statuses, troubleshooting commands |
-| `./room hint` | Displays next progressive hint (1 → 2 → 3) |
-| `./room verify` | Runs `verify.sh`, prints ASCII celebration banner if fixed |
-| `./room solve` | Applies reference solution (instructor/emergency only) |
-| `./room reset` | Re-injects current level's broken state |
-| `./room cleanup` | Tears down the kind cluster |
+| `./scripts/escape-room.sh setup` | Checks docker, creates kind cluster `escape-room` |
+| `./scripts/escape-room.sh start <level>` | Resets namespace, applies broken manifests, shows incident alert |
+| `./scripts/escape-room.sh status` | Shows active scenario, pod statuses, troubleshooting commands |
+| `./scripts/escape-room.sh hint` | Displays next progressive hint (1 → 2 → 3) |
+| `./scripts/escape-room.sh verify` | Runs `verify.sh`, prints ASCII celebration banner if fixed |
+| `./scripts/escape-room.sh solve` | Applies reference solution (instructor/emergency only) |
+| `./scripts/escape-room.sh reset` | Re-injects current level's broken state |
+| `./scripts/escape-room.sh cleanup` | Tears down the kind cluster |
 
 **Constraints:**
 - No `jq`, no Python, no external runtime deps
@@ -43,11 +43,11 @@ M1: Core Harness & Cluster Setup
 - State persisted to `.room-state` as plain INI text
 
 **Review checklist (human must approve before M2/M3/M4 start):**
-- [ ] `./room setup` creates cluster and verifies `kubectl` connectivity
-- [ ] `./room start level-01` applies broken manifests to `escape-level-01` namespace
+- [ ] `./scripts/escape-room.sh setup` creates cluster and verifies `kubectl` connectivity
+- [ ] `./scripts/escape-room.sh start level-01` applies broken manifests to `escape-level-01` namespace
 - [ ] State file updates correctly on every command
 - [ ] All commands are idempotent (can re-run without error)
-- [ ] Script passes `shellcheck room`
+- [ ] Script passes `shellcheck scripts/escape-room.sh`
 
 ---
 
@@ -189,6 +189,6 @@ docs/
 | Decision | Selected Option | Rationale |
 |---|---|---|
 | **Model Hosting** | Free Web/CLI Copilots (Gemini, ChatGPT, Claude) | No VRAM/RAM constraints; zero setup friction for 40 attendees |
-| **Harness Tech** | Pure POSIX Bash (`./room`) | Runs out-of-the-box on macOS and Linux; no Python/jq |
+| **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Runs out-of-the-box on macOS and Linux; no Python/jq |
 | **Scenario Sizing** | 3 Core + 1 Bonus | Tuned for 40–50 min collaborative pairing |
 | **Verification** | In-cluster synthetic probes | Idempotent, binary feedback (Escaped / Still Trapped) |

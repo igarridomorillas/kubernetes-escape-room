@@ -123,19 +123,19 @@
 
 ---
 
-## 3. CLI Harness Specification (`./room`)
+## 3. CLI Harness Specification (`scripts/escape-room.sh`)
 
-The `./room` tool provides a unified, color-coded terminal experience:
+The `scripts/escape-room.sh` tool provides a unified, color-coded terminal experience:
 
 ```bash
-./room setup                 # Checks docker, creates kind cluster 'escape-room'
-./room start <level>         # e.g., level-01. Resets namespace, applies broken manifests, shows incident alert
-./room status                # Shows active scenario, pod statuses, and troubleshooting commands
-./room hint                  # Displays next progressive hint (1 -> 2 -> 3)
-./room verify                # Runs scenario verify.sh, prints ASCII celebration banner if fixed
-./room solve                 # (Emergency/Instructor) Applies reference solution
-./room reset                 # Re-injects current level's broken state
-./room cleanup               # Tears down kind cluster
+./scripts/escape-room.sh setup                 # Checks docker, creates kind cluster 'escape-room'
+./scripts/escape-room.sh start <level>         # e.g., level-01. Resets namespace, applies broken manifests, shows incident alert
+./scripts/escape-room.sh status                # Shows active scenario, pod statuses, and troubleshooting commands
+./scripts/escape-room.sh hint                  # Displays next progressive hint (1 -> 2 -> 3)
+./scripts/escape-room.sh verify                # Runs scenario verify.sh, prints ASCII celebration banner if fixed
+./scripts/escape-room.sh solve                 # (Emergency/Instructor) Applies reference solution
+./scripts/escape-room.sh reset                 # Re-injects current level's broken state
+./scripts/escape-room.sh cleanup               # Tears down kind cluster
 ```
 
 ### State Storage (`.room-state`)
@@ -151,7 +151,7 @@ COMPLETED_LEVELS=
 
 ### 📋 Milestone 1: Core Harness & Cluster Setup
 > **Prompt for Agent 1:**
-> *"Implement the automation harness for the Kubernetes Escape Room at `/Users/unai/.gemini/antigravity/scratch/k8s-escape-room`. Create the `kind/cluster-config.yaml` with port forwards (8080:30080, 8443:30443). Implement `./room` as an executable Bash script supporting `setup`, `start <level>`, `status`, `hint`, `verify`, `solve`, `reset`, and `cleanup`. Ensure zero external dependencies (pure Bash, no jq). Manage state in `.room-state`. Format output with ANSI colors and clear status banners."*
+> *"Implement the automation harness for the Kubernetes Escape Room at `/Users/unai/.gemini/antigravity/scratch/k8s-escape-room`. Create the `kind/cluster-config.yaml` with port forwards (8080:30080, 8443:30443). Implement `scripts/escape-room.sh` as an executable Bash script supporting `setup`, `start <level>`, `status`, `hint`, `verify`, `solve`, `reset`, and `cleanup`. Ensure zero external dependencies (pure Bash, no jq). Manage state in `.room-state`. Format output with ANSI colors and clear status banners."*
 
 ### 📋 Milestone 2: Implement Level 01 ("The Ghost Image")
 > **Prompt for Agent 2:**
@@ -176,6 +176,6 @@ COMPLETED_LEVELS=
 | Decision | Selected Option | Rationale |
 | :--- | :--- | :--- |
 | **Model Hosting** | Free Web/CLI Copilots (Gemini, ChatGPT, Claude) | Avoids laptop VRAM/RAM constraints and eliminates setup friction for 40 attendees. |
-| **Harness Tech** | Pure POSIX Bash (`./room`) | Guaranteed to run out of the box on macOS and Linux without installing Python packages or `jq`. |
+| **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Guaranteed to run out of the box on macOS and Linux without installing Python packages or `jq`. |
 | **Scenario Sizing** | 3 Core Scenarios + 1 Bonus | Perfectly tuned for 40–50 minutes of collaborative pairing. |
 | **Verification Method** | Non-destructive in-cluster synthetic probes | Idempotent, testable, and gives immediate binary feedback (Escaped / Still Trapped). |

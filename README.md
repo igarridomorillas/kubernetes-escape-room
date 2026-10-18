@@ -20,11 +20,11 @@ Each level presents a realistic incident alert. Pods are broken, traffic is down
 All levels run locally via a single CLI tool:
 
 ```bash
-./room setup          # spin up a Kind cluster
-./room start level-01 # inject the broken scenario
-./room hint           # get a progressive hint
-./room verify         # check if you've escaped
-./room solve          # reveal the solution (instructor only)
+./scripts/escape-room.sh setup          # spin up a Kind cluster
+./scripts/escape-room.sh start level-01 # inject the broken scenario
+./scripts/escape-room.sh hint           # get a progressive hint
+./scripts/escape-room.sh verify         # check if you've escaped
+./scripts/escape-room.sh solve          # reveal the solution (instructor only)
 ```
 
 ---
@@ -34,7 +34,8 @@ All levels run locally via a single CLI tool:
 ```
 kubernetes-escape-room/
 ├── AGENTS.md                        # Agent & contributor conventions
-├── room                             # Main CLI harness (pure Bash, zero deps)
+├── scripts/
+│   └── escape-room.sh               # Main CLI harness (pure Bash, zero deps)
 ├── kind/
 │   └── cluster-config.yaml          # Kind cluster definition
 ├── scenarios/

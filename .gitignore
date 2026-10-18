@@ -1,0 +1,4 @@
+.room-state
+*.kubeconfig
+kubeconfig
+.DS_Store

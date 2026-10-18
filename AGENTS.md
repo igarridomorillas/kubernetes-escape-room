@@ -12,7 +12,7 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40�
 - [`docs/design/plan.md`](docs/design/plan.md) — Full architecture & implementation plan (source of truth)
 - [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) — Milestone tracker & human review gates
 - [`AGENTS.md`](AGENTS.md) — This file
-- `.room-state` — Runtime state (gitignored, auto-managed by `./room`)
+- `.room-state` — Runtime state (gitignored, auto-managed by `./scripts/escape-room.sh`)
 
 ---
 
@@ -20,7 +20,7 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40�
 
 ### Non-negotiable constraints
 
-1. **Zero external runtime dependencies** in `./room` and all `verify.sh` scripts.
+1. **Zero external runtime dependencies** in `./scripts/escape-room.sh` and all `verify.sh` scripts.
    - Pure POSIX Bash only (`#!/usr/bin/env bash`).
    - Allowed: `curl`, `awk`, `sed`, `grep`, `kubectl`, `kind`, `docker`.
    - **Forbidden:** `jq`, `python`, `ruby`, `yq`, or any package-manager-installed tool.
@@ -50,7 +50,8 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40�
 kubernetes-escape-room/
 ├── AGENTS.md                        # ← You are here
 ├── README.md
-├── room                             # Main CLI harness (executable Bash)
+├── scripts/
+│   └── escape-room.sh               # Main CLI harness implementation (executable Bash)
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
 │   └── cluster-config.yaml          # Kind cluster definition
@@ -100,42 +101,42 @@ kubectl version        # >= 1.28
 
 ```bash
 # Create the Kind cluster (first-time setup)
-./room setup
+./scripts/escape-room.sh setup
 
 # Tear down the cluster
-./room cleanup
+./scripts/escape-room.sh cleanup
 ```
 
 ### Running a level end-to-end
 
 ```bash
 # Load and break a specific level
-./room start level-01     # or level-02, level-03
+./scripts/escape-room.sh start level-01     # or level-02, level-03
 
 # Check current status
-./room status
+./scripts/escape-room.sh status
 
 # Get the next hint
-./room hint
+./scripts/escape-room.sh hint
 
 # Verify the scenario is fixed
-./room verify
+./scripts/escape-room.sh verify
 
 # Apply the reference solution (instructor use only)
-./room solve
+./scripts/escape-room.sh solve
 
 # Re-inject broken state without restarting cluster
-./room reset
+./scripts/escape-room.sh reset
 
 # Cleanup
-./room cleanup
+./scripts/escape-room.sh cleanup
 ```
 
 ### Linting & shell script validation
 
 ```bash
 # Lint the main harness
-shellcheck room
+shellcheck scripts/escape-room.sh
 
 # Lint all verify scripts
 shellcheck scenarios/*/verify.sh
@@ -148,12 +149,12 @@ find scenarios/ -name "*.sh" -exec shellcheck {} \;
 
 ```bash
 # Full scenario smoke test (broken → verify fails → solve → verify passes)
-./room start level-01
-./room verify           # Expected: exits 1 (still broken)
-./room solve
-./room verify           # Expected: exits 0 (escaped)
-./room reset
-./room verify           # Expected: exits 1 (re-broken)
+./scripts/escape-room.sh start level-01
+./scripts/escape-room.sh verify           # Expected: exits 1 (still broken)
+./scripts/escape-room.sh solve
+./scripts/escape-room.sh verify           # Expected: exits 0 (escaped)
+./scripts/escape-room.sh reset
+./scripts/escape-room.sh verify           # Expected: exits 1 (re-broken)
 ```
 
 ---
@@ -239,11 +240,11 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
 4. Implement **one milestone at a time** unless explicitly instructed otherwise.
 5. After every file created, run `shellcheck` on any `.sh` file. Fix all `SC*` warnings before proceeding.
 6. After applying broken manifests, validate the failure mode with `kubectl get pods -n <namespace>` before moving on.
-7. After applying solution manifests, run `./room verify` and confirm exit code `0`.
+7. After applying solution manifests, run `./scripts/escape-room.sh verify` and confirm exit code `0`.
 
 ### When making changes
 
-8. **Never modify `./room` without also updating the corresponding section in this `AGENTS.md`.**
+8. **Never modify `scripts/escape-room.sh` without also updating the corresponding section in this `AGENTS.md`.**
 9. **Never modify a `verify.sh` to make it pass without fixing the underlying scenario bug.**
 10. If a design decision must change (e.g., a base image is unavailable), document it in [`docs/design/plan.md`](docs/design/plan.md) under a new "Amendment" section and flag it for human review.
 
@@ -268,7 +269,7 @@ The human (repo owner) must review and explicitly approve before an agent procee
 
 | Gate | Trigger | What to review |
 |---|---|---|
-| **M1 done** | After `./room` is implemented | All 8 commands work; shellcheck passes; state file updates correctly |
+| **M1 done** | After `scripts/escape-room.sh` is implemented | All 8 commands work; shellcheck passes; state file updates correctly |
 | **M2 done** | After level-01 is implemented | Broken state shows `ImagePullBackOff`; verify fails; solve → verify passes |
 | **M3 done** | After level-02 is implemented | Both bugs independently visible; healthz endpoint verifies correctly |
 | **M4 done** | After level-03 is implemented | Both misconfiguration bugs visible; end-to-end probe works |
