@@ -86,7 +86,8 @@ kubernetes-escape-room/
     │   └── plan.md                  # Architecture & implementation plan
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
-    │   └── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
+    │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
+    │   └── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
     ├── ai-prompts-cheatsheet.md
     └── pre-workshop-checklist.md
 ```
@@ -99,7 +100,7 @@ kubernetes-escape-room/
 
 ```bash
 # Verify required tools are installed
-docker --version       # Docker Desktop or Colima
+docker --version       # Docker Desktop
 kind --version         # >= 0.20.0
 kubectl version        # >= 1.28
 ```
@@ -108,6 +109,8 @@ kubectl version        # >= 1.28
 
 ```bash
 # Create the Kind cluster (first-time setup)
+# Checks for docker, kind and kubectl (and that Docker is running); if any
+# requirement is missing it prints an install link/hint and exits 1.
 ./scripts/escape-room.sh setup
 
 # Tear down the cluster
@@ -127,12 +130,14 @@ kubectl version        # >= 1.28
 ./scripts/escape-room.sh hint
 
 # Verify the scenario is fixed
+# (on success, prints next steps: start the next level, reset, or cleanup)
 ./scripts/escape-room.sh verify
 
 # Apply the reference solution (instructor use only)
 ./scripts/escape-room.sh solve
 
 # Re-inject broken state without restarting cluster
+# (also removes the level from COMPLETED_LEVELS; `start` does the same)
 ./scripts/escape-room.sh reset
 
 # Cleanup
@@ -216,27 +221,58 @@ SERVICE_URL="http://your-service.${NAMESPACE}.svc.cluster.local:PORT/path"
 
 echo "🔍 Verifying Level XX..."
 
-# Step 1: Check pod readiness
-READY=$(kubectl get pods -n "${NAMESPACE}" -l "${APP_LABEL}" \
-  -o jsonpath='{.items[0].status.containerStatuses[0].ready}' 2>/dev/null || echo "false")
-
-if [[ "${READY}" != "true" ]]; then
-  echo "❌ Pod is not ready. Run: kubectl get pods -n ${NAMESPACE}"
+# Step 1: Check the rollout is complete (new pods Ready, old pods gone).
+# Never read items[0] of a pod list: stale pods from an old ReplicaSet break it.
+if ! kubectl rollout status deployment/your-app -n "${NAMESPACE}" --timeout=5s > /dev/null 2>&1; then
+  echo "❌ Pod is not ready. Run: kubectl get pods -n ${NAMESPACE} -l ${APP_LABEL}"
   exit 1
 fi
 
-# Step 2: In-cluster HTTP probe
-kubectl run verify-probe-$$ \
-  --image=curlimages/curl:latest \
-  --restart=Never \
-  --rm \
-  -it \
-  -n "${NAMESPACE}" \
-  -- curl -fsS --max-time 5 "${SERVICE_URL}" > /dev/null
+# Step 2: In-cluster HTTP probe (pinned image, detached pod).
+# Do NOT use `kubectl run -i --rm`: it can return 0 when the pod exits before
+# kubectl attaches, so a failing curl would look like a pass.
+PROBE_POD="verify-probe-$$"
+trap 'kubectl delete pod "${PROBE_POD}" -n "${NAMESPACE}" --ignore-not-found --wait=false >/dev/null 2>&1 || true' EXIT
+
+if ! kubectl run "${PROBE_POD}" --image=curlimages/curl:8.11.1 --restart=Never \
+  -n "${NAMESPACE}" -- curl -fsS --max-time 5 -o /dev/null "${SERVICE_URL}" >/dev/null 2>&1; then
+  echo "⚠️  Could not create the probe pod. Retry in a moment."
+  exit 1
+fi
+
+PHASE=""
+for _ in $(seq 1 60); do
+  PHASE=$(kubectl get pod "${PROBE_POD}" -n "${NAMESPACE}" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+  [[ "${PHASE}" == "Succeeded" || "${PHASE}" == "Failed" ]] && break
+  sleep 1
+done
+
+case "${PHASE}" in
+  Succeeded) ;;
+  Failed) echo "❌ Endpoint probe failed: ${SERVICE_URL} did not return HTTP 200"; exit 1 ;;
+  *) echo "⚠️  Probe pod did not finish (image pull or scheduling issue). Retry in a moment."; exit 1 ;;
+esac
 
 echo "✅ Level XX complete! You escaped!"
 exit 0
 ```
+
+### Scenario authoring rules (learned from Level 01 review)
+
+- **Pin every image** in `broken/`, `solution/` and probe pods to a specific version (e.g. `nginx:1.27-alpine`, `curlimages/curl:8.11.1`). Never use `latest` or floating tags like `nginx:alpine`.
+- **`verify.sh` readiness:** use `kubectl rollout status deployment/<name> --timeout=5s` (or `kubectl wait`), never `items[0]` of a pod list — during a rollout the old failing pod can sort first.
+- **`verify.sh` probe pods run detached:** create the pod, poll `.status.phase` (`Succeeded`/`Failed`, bounded loop) and clean up with a `trap`. Never rely on the exit code of `kubectl run -i --rm` — it can be lost and report success for a failing curl (found during the M2 end-to-end test).
+- **`verify.sh` failures must be diagnosable:** distinguish an endpoint failure (`Failed` phase) from a probe-pod failure (could not create / did not finish: image pull or scheduling).
+- **Hints are progressive:** Hint 1 = concept, Hint 2 = investigation commands (`describe`, `logs`, `events`) **without** the fix, Hint 3 = AI prompt recipe. Never put the fix command or the correct value in Hints 1–2.
+- **`incident.md` describes symptoms only:** no root cause, no "last deploy" hints, and no endpoints/paths that the workload does not actually serve.
+- **Executable scripts** must be `chmod 750`; re-check after editing with tools that reset modes.
+
+### Harness behaviour (`scripts/escape-room.sh`)
+
+- `setup` checks `docker`, `kind` and `kubectl`; for a missing `docker` or `kind` it prints an install link/hint and exits `1`. A stopped Docker daemon gets a "start Docker Desktop" hint.
+- `start <level>` and `reset` re-break the level **and** remove it from `COMPLETED_LEVELS` in `.room-state`, so `status` never shows a broken level as completed. Only `cleanup` deletes `.room-state`.
+- `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`start <next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `reset` and `cleanup`).
+- Levels are switched with `start <level>` only; there is intentionally no `next` command.
 
 ---
 
@@ -282,6 +318,8 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
     - Update `docs/sessions/00-milestones.md`: mark the milestone status as complete and check off all review checklist items (`[x]`).
     - Create a session log `docs/sessions/<NN>-milestone-<XX>.md` detailing deliverables, key design iterations, CLI commands, and verification gates.
     - Keep the directory trees in `README.md` and `AGENTS.md` up to date.
+17. **Never pre-tick human review gates.** Review checklists in `00-milestones.md` and smoke-test items in session logs stay unchecked (status "🔍 In review") until the human has approved the PR; only then mark them complete (rule 16).
+18. **State what you could not run.** If `kind`, `shellcheck` or a cluster is unavailable, say so in the PR/session log and leave the related verification items unchecked rather than asserting they passed.
 
 ---
 

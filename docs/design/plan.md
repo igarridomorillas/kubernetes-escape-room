@@ -128,13 +128,13 @@
 The `scripts/escape-room.sh` tool provides a unified, color-coded terminal experience:
 
 ```bash
-./scripts/escape-room.sh setup                 # Checks docker, creates kind cluster 'escape-room'
+./scripts/escape-room.sh setup                 # Checks docker/kind/kubectl (prints install hints if missing), creates kind cluster 'escape-room'
 ./scripts/escape-room.sh start <level>         # e.g., level-01. Resets namespace, applies broken manifests, shows incident alert
 ./scripts/escape-room.sh status                # Shows active scenario, pod statuses, and troubleshooting commands
 ./scripts/escape-room.sh hint                  # Displays next progressive hint (1 -> 2 -> 3)
-./scripts/escape-room.sh verify                # Runs scenario verify.sh, prints ASCII celebration banner if fixed
+./scripts/escape-room.sh verify                # Runs scenario verify.sh, prints ASCII celebration banner + next steps if fixed
 ./scripts/escape-room.sh solve                 # (Emergency/Instructor) Applies reference solution
-./scripts/escape-room.sh reset                 # Re-injects current level's broken state
+./scripts/escape-room.sh reset                 # Re-injects current level's broken state (and clears its completed mark)
 ./scripts/escape-room.sh cleanup               # Tears down kind cluster
 ```
 
@@ -155,7 +155,7 @@ COMPLETED_LEVELS=
 
 ### 📋 Milestone 2: Implement Level 01 ("The Ghost Image")
 > **Prompt for Agent 2:**
-> *"Create Level 01 under `scenarios/level-01-ghost-image/`. Structure: `broken/` (manifest with non-existent image tag `nginx:1.27.99-alpine` in namespace `escape-level-01`), `solution/` (valid `nginx:alpine`), `incident.md` (realistic PagerDuty alert), `hints.md` (3-tier hints + AI prompt recipe), and `verify.sh` (deterministic probe testing Pod readiness and HTTP 200). Ensure `verify.sh` exits 0 on success, 1 on failure."*
+> *"Create Level 01 under `scenarios/level-01-ghost-image/`. Structure: `broken/` (manifest with non-existent image tag `nginx:1.27.99-alpine` in namespace `escape-level-01`), `solution/` (valid `nginx:1.27-alpine`), `incident.md` (realistic PagerDuty alert), `hints.md` (3-tier hints + AI prompt recipe), and `verify.sh` (deterministic probe testing Pod readiness and HTTP 200). Ensure `verify.sh` exits 0 on success, 1 on failure."*
 
 ### 📋 Milestone 3: Implement Level 02 ("The Crashing Config")
 > **Prompt for Agent 3:**
@@ -179,3 +179,18 @@ COMPLETED_LEVELS=
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Guaranteed to run out of the box on macOS and Linux without installing Python packages or `jq`. |
 | **Scenario Sizing** | 3 Core Scenarios + 1 Bonus | Perfectly tuned for 40–50 minutes of collaborative pairing. |
 | **Verification Method** | Non-destructive in-cluster synthetic probes | Idempotent, testable, and gives immediate binary feedback (Escaped / Still Trapped). |
+
+---
+
+## 6. Amendments
+
+### Amendment 1 — Level 01 review hardening (M2)
+
+*Flagged for human review.*
+
+- **Readiness check:** `verify.sh` uses `kubectl rollout status` instead of reading `items[0]` of the pod list, which was unreliable during rollouts (stale `ImagePullBackOff` pod from the old ReplicaSet).
+- **Image pinning:** the Level 01 solution uses `nginx:1.27-alpine` (was `nginx:alpine`) and the verify probe uses `curlimages/curl:8.11.1` (was `latest`), in line with the "pinned digests or well-known tags" constraint.
+- **Probe execution:** `verify.sh` creates the probe pod detached, polls its phase (max 60s) and cleans up with a `trap`, because `kubectl run -i --rm` can lose the container exit code and falsely report success. `Failed` phase = endpoint failure; create failure or timeout = probe-pod (pull/scheduling) failure.
+- **Hints & incident:** Hint 2 no longer includes the fix command; `incident.md` no longer names the cause.
+- **Harness state:** `start`/`reset` remove the level from `COMPLETED_LEVELS`; `verify` success prints next steps. A `next` command was considered and rejected — `start <level>` is the single way to switch levels.
+- **Setup UX:** `setup` prints install links for missing `docker`/`kind` and a start-Docker hint when the daemon is stopped.

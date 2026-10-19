@@ -99,13 +99,69 @@ EOF
   echo ""
 }
 
+unmark_completed() {
+  local level="$1"
+  local completed kept="" item
+  completed="$(read_state COMPLETED_LEVELS)"
+  local IFS=','
+  for item in ${completed}; do
+    if [[ "${item}" != "${level}" ]]; then
+      kept="${kept:+${kept},}${item}"
+    fi
+  done
+  write_state "COMPLETED_LEVELS" "${kept}"
+}
+
+# Prints the next available level after "$1" (empty if none has a scenario yet)
+next_level() {
+  local current="$1" found=0 candidate d
+  for candidate in ${VALID_LEVELS}; do
+    if [[ "${found}" -eq 1 ]]; then
+      for d in "${SCENARIOS_DIR}/${candidate}-"*/; do
+        if [[ -d "${d}" ]]; then
+          echo "${candidate}"
+          return 0
+        fi
+      done
+    fi
+    [[ "${candidate}" == "${current}" ]] && found=1
+  done
+  return 0
+}
+
+print_next_steps() {
+  local level="$1" next
+  next="$(next_level "${level}")"
+  echo -e "${BOLD}What's next?${NC}"
+  if [[ -n "${next}" ]]; then
+    echo -e "  Continue:   ${BOLD}./scripts/escape-room.sh start ${next}${NC}"
+  else
+    echo -e "  ${GREEN}No further levels are available yet.${NC}"
+  fi
+  echo -e "  Retry:      ${BOLD}./scripts/escape-room.sh reset${NC}"
+  echo -e "  Tear down:  ${BOLD}./scripts/escape-room.sh cleanup${NC}"
+  echo ""
+}
+
 # ─── Prerequisite checks ──────────────────────────────────────────────────────
+
+install_hint() {
+  case "$1" in
+    docker)  echo "https://docs.docker.com/get-docker/  (macOS: 'brew install --cask docker')" ;;
+    kind)    echo "https://kind.sigs.k8s.io/docs/user/quick-start/#installation  (macOS: 'brew install kind')" ;;
+  esac
+}
 
 check_prereqs() {
   local missing=0
   for cmd in docker kind kubectl; do
     if ! command -v "${cmd}" > /dev/null 2>&1; then
       echo -e "${RED}✗ Missing required tool: ${cmd}${NC}"
+      local hint
+      hint="$(install_hint "${cmd}")"
+      if [[ -n "${hint}" ]]; then
+        echo -e "  ${YELLOW}💡 Install it: ${hint}${NC}"
+      fi
       missing=1
     fi
   done
@@ -160,6 +216,7 @@ cmd_setup() {
   echo -e "${CYAN}→ Checking Docker...${NC}"
   if ! docker info > /dev/null 2>&1; then
     echo -e "${RED}✗ Docker is not running. Please start Docker and retry.${NC}"
+    echo -e "  ${YELLOW}💡 Start Docker Desktop. Not installed? $(install_hint docker)${NC}"
     exit 1
   fi
   echo -e "${GREEN}✓ Docker is running.${NC}"
@@ -231,6 +288,7 @@ cmd_start() {
   init_state
   write_state "CURRENT_LEVEL" "${level}"
   write_state "HINT_LEVEL" "0"
+  unmark_completed "${level}"
 
   # Show incident alert
   local incident_file="${dir}incident.md"
@@ -382,7 +440,7 @@ cmd_verify() {
     # Mark level as completed
     local completed
     completed="$(read_state COMPLETED_LEVELS)"
-    if ! echo "${completed}" | grep -q "${level}"; then
+    if [[ ",${completed}," != *",${level},"* ]]; then
       if [[ -z "${completed}" ]]; then
         write_state "COMPLETED_LEVELS" "${level}"
       else
@@ -390,6 +448,7 @@ cmd_verify() {
       fi
     fi
     print_success_banner
+    print_next_steps "${level}"
   else
     echo ""
     echo -e "${YELLOW}⚠  Not fixed yet. Run ${BOLD}./scripts/escape-room.sh hint${NC}${YELLOW} for your next clue.${NC}"
@@ -476,6 +535,7 @@ cmd_reset() {
   kubectl apply -f "${broken_dir}/" -n "${namespace}"
 
   write_state "HINT_LEVEL" "0"
+  unmark_completed "${level}"
 
   echo -e "${GREEN}✓ Broken state restored.${NC}"
   echo ""

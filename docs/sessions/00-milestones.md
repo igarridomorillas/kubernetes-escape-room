@@ -53,7 +53,7 @@ M1: Core Harness & Cluster Setup
 
 ## Milestone 2 — Level 01: "The Ghost Image" (Warm-up)
 
-**Status:** ⏳ Ready to start  
+**Status:** 🔍 In review  
 **Namespace:** `escape-level-01`  
 **Duration target:** 8–10 min
 
@@ -64,7 +64,7 @@ M1: Core Harness & Cluster Setup
 ```
 scenarios/level-01-ghost-image/
 ├── broken/          # Manifest with bad image tag
-├── solution/        # Fixed manifest (nginx:alpine)
+├── solution/        # Fixed manifest (nginx:1.27-alpine)
 ├── incident.md      # Realistic PagerDuty-style alert
 ├── hints.md         # 3 tiered hints + AI prompt recipe
 └── verify.sh        # Probe: pod Running + HTTP 200
@@ -173,7 +173,7 @@ docs/
 
 **`pre-workshop-checklist.md` must cover:**
 - Instructor pre-event: cluster creation, image availability, level smoke-tests
-- Attendee prereqs: `kubectl`, `kind`, Docker Desktop / Colima
+- Attendee prereqs: `kubectl`, `kind`, Docker Desktop
 - Fallback options if local cluster fails
 
 **Review checklist (final human gate before event):**
