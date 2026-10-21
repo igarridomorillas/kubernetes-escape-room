@@ -86,7 +86,7 @@ scenarios/level-01-ghost-image/
 
 ## Milestone 3 — Level 02: "The Crashing Config" (Core)
 
-**Status:** ⬜ Not started  
+**Status:** 🔍 In review  
 **Namespace:** `escape-level-02`  
 **Duration target:** 12–15 min
 

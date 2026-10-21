@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processor
+  namespace: escape-level-02
+  labels:
+    app: order-processor
+    component: backend
+    level: "02"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-processor
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: order-processor
+        component: backend
+        level: "02"
+    spec:
+      containers:
+        - name: order-processor
+          image: escape-room/level-02-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: order-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 48Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi

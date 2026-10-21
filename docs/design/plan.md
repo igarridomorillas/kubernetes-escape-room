@@ -194,3 +194,14 @@ COMPLETED_LEVELS=
 - **Hints & incident:** Hint 2 no longer includes the fix command; `incident.md` no longer names the cause.
 - **Harness state:** `start`/`reset` remove the level from `COMPLETED_LEVELS`; `verify` success prints next steps. A `next` command was considered and rejected — `start <level>` is the single way to switch levels.
 - **Setup UX:** `setup` prints install links for missing `docker`/`kind` and a start-Docker hint when the daemon is stopped.
+
+### Amendment 2 — Level 02 design details (M3)
+
+*Flagged for human review.*
+
+- **Config injection:** the Deployment uses `envFrom: configMapRef` (not `configMapKeyRef`). With a `configMapKeyRef` and a missing key, Kubernetes never starts the container (`CreateContainerConfigError`), so the `KeyError: 'DATABASE_URL'` in the app logs described in the plan could not occur.
+- **Both bugs visible in the broken state:** the app checks `DATABASE_URL` first and logs the `KeyError`, then warms a 32MiB cache, and only then exits `1`. At `16Mi` the kernel OOM-kills it during the warm-up (Exit Code 137), so logs show the config error while `describe` shows `OOMKilled`. Fixing either bug alone exposes the other (verified).
+- **Image delivery:** `start` builds `app/` and `kind load`s the image `escape-room/level-02-app:1.0.0` (harness change, documented in `AGENTS.md`). Base image pinned to `python:3.12-alpine3.20`; stdlib only.
+- **Hints:** Hint 2 uses plain `kubectl logs` first, because `--previous` is unreliable on kind (the older dead container is garbage-collected during CrashLoop backoff).
+- **Solution values:** memory request `48Mi` / limit `64Mi`.
+- **Verification:** `verify.sh` requires a completed rollout, an unchanged restart count over 15s, and the exact `/healthz` body `{"status":"healthy","database":"connected"}` from an in-cluster probe.

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-config
+  namespace: escape-level-02
+  labels:
+    app: order-processor
+    component: backend
+    level: "02"
+data:
+  DB_CONNECTION_STRING: "postgresql://fake-host:5432/fakedb"

@@ -10,24 +10,26 @@ A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to dia
 
 Each level presents a realistic incident alert. Pods are broken, traffic is down, the on-call is you. Use `kubectl`, the tiered hints, and AI copilots to escape before time runs out.
 
-| Level | Name | Difficulty | Core concept |
-|---|---|---|---|
-| 01 | The Ghost Image | ⭐ Warm-up | `ImagePullBackOff` / bad image tag |
-| 02 | The Crashing Config | ⭐⭐ Core | `CrashLoopBackOff` / OOMKill + ConfigMap mismatch |
-| 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch |
-| 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise |
+| Level | Name | Difficulty | Core concept | Status |
+|---|---|---|---|---|
+| 01 | The Ghost Image | ⭐ Warm-up | `ImagePullBackOff` / bad image tag | ✅ Available |
+| 02 | The Crashing Config | ⭐⭐ Core | `CrashLoopBackOff` / OOMKill + ConfigMap mismatch | ✅ Available |
+| 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch | 🚧 Planned |
+| 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | 🚧 Planned |
 
 All levels run locally via a single CLI tool:
 
 ```bash
 ./scripts/escape-room.sh setup          # spin up a Kind cluster
-./scripts/escape-room.sh start level-01 # inject the broken scenario
+./scripts/escape-room.sh start level-01 # inject the broken scenario (or level-02)
 ./scripts/escape-room.sh hint           # get a progressive hint
 ./scripts/escape-room.sh verify         # check if you've escaped
 ./scripts/escape-room.sh solve          # reveal the solution (instructor only)
 ./scripts/escape-room.sh reset          # re-break the current level and retry
 ./scripts/escape-room.sh cleanup        # tear down the Kind cluster
 ```
+
+`start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Level 02 ships a small app that `start` builds and loads into the cluster for you (no registry needed).
 
 ---
 
@@ -51,7 +53,8 @@ kubernetes-escape-room/
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1: Core harness & cluster setup
-    │   └── 02-milestone-02.md       # Session 2: Level 01 — The Ghost Image
+    │   ├── 02-milestone-02.md       # Session 2: Level 01 — The Ghost Image
+    │   └── 03-milestone-03.md       # Session 3: Level 02 — The Crashing Config
     ├── ai-prompts-cheatsheet.md     # SRE Copilot Prompt Pattern (coming soon)
     └── pre-workshop-checklist.md    # Instructor & attendee checklist (coming soon)
 ```
@@ -72,4 +75,4 @@ kubectl version    # >= 1.28
 
 ## Status
 
-> 🚧 **Implementation in progress.** See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.
+> 🚧 **Implementation in progress.** Levels 01 and 02 are implemented; levels 03 and 04 are not yet. See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.

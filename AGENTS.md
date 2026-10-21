@@ -67,7 +67,7 @@ kubernetes-escape-room/
 │   │   ├── hints.md                 # 3-tier progressive hints
 │   │   └── verify.sh                # Deterministic verification probe
 │   ├── level-02-crashing-config/
-│   │   ├── app/                     # Self-contained app source + Dockerfile
+│   │   ├── app/                     # Self-contained app source + Dockerfile (built by `start`)
 │   │   ├── broken/
 │   │   ├── solution/
 │   │   ├── incident.md
@@ -87,7 +87,8 @@ kubernetes-escape-room/
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
-    │   └── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
+    │   ├── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
+    │   └── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
     ├── ai-prompts-cheatsheet.md
     └── pre-workshop-checklist.md
 ```
@@ -271,6 +272,8 @@ exit 0
 
 - `setup` checks `docker`, `kind` and `kubectl`; for a missing `docker` or `kind` it prints an install link/hint and exits `1`. A stopped Docker daemon gets a "start Docker Desktop" hint.
 - `start <level>` and `reset` re-break the level **and** remove it from `COMPLETED_LEVELS` in `.room-state`, so `status` never shows a broken level as completed. Only `cleanup` deletes `.room-state`.
+- `start <level>` first deletes the namespaces of all other levels (completed marks in `.room-state` are kept), so a previous level never interferes with the new one.
+- `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
 - `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`start <next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `reset` and `cleanup`).
 - Levels are switched with `start <level>` only; there is intentionally no `next` command.
 
