@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-firewall
+  namespace: escape-level-03
+  labels:
+    app: backend
+    component: backend
+    level: "03"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+      component: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: api-consumer

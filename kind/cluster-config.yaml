@@ -1,6 +1,12 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: escape-room
+networking:
+  # Cilium is installed by ./scripts/escape-room.sh setup (kind/cni/cilium.yaml),
+  # so NetworkPolicy is enforced. Nodes stay NotReady until it is up.
+  disableDefaultCNI: true
+  podSubnet: "10.10.0.0/16"
+  serviceSubnet: "10.11.0.0/16"
 nodes:
   - role: control-plane
     extraPortMappings:

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-config
+  namespace: escape-level-03
+  labels:
+    app: frontend
+    component: frontend
+    level: "03"
+data:
+  default.conf: |
+    resolver kube-dns.kube-system.svc.cluster.local valid=10s;
+
+    server {
+      listen 80;
+
+      location = /healthz {
+        return 200 'ok';
+      }
+
+      # Proxy API calls to the backend Service
+      location /api/ {
+        set $backend_upstream http://backend-service.escape-level-03.svc.cluster.local:80;
+        proxy_connect_timeout 3s;
+        proxy_read_timeout 5s;
+        proxy_pass $backend_upstream;
+      }
+    }

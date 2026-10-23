@@ -58,7 +58,10 @@ kubernetes-escape-room/
 │   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
-│   └── cluster-config.yaml          # Kind cluster definition
+│   ├── cluster-config.yaml          # Kind cluster definition (disableDefaultCNI)
+│   ├── .kube/config                 # Repo-local kubeconfig (gitignored, written by `setup`)
+│   └── cni/
+│       └── cilium.yaml              # Pinned Cilium 1.20.2 CNI manifest (rendered by helm)
 ├── scenarios/
 │   ├── level-01-ghost-image/
 │   │   ├── broken/                  # Broken Kubernetes manifests
@@ -88,7 +91,8 @@ kubernetes-escape-room/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
     │   ├── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
-    │   └── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
+    │   ├── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
+    │   └── 04-milestone-04.md       # Session 4 log: Level 03 — The Silent Wall
     ├── ai-prompts-cheatsheet.md
     └── pre-workshop-checklist.md
 ```
@@ -112,6 +116,7 @@ kubectl version        # >= 1.28
 # Create the Kind cluster (first-time setup)
 # Checks for docker, kind and kubectl (and that Docker is running); if any
 # requirement is missing it prints an install link/hint and exits 1.
+# Then installs the pinned Cilium CNI (kind/cni/cilium.yaml) and waits for Ready nodes.
 ./scripts/escape-room.sh setup
 
 # Tear down the cluster
@@ -271,9 +276,13 @@ exit 0
 ### Harness behaviour (`scripts/escape-room.sh`)
 
 - `setup` checks `docker`, `kind` and `kubectl`; for a missing `docker` or `kind` it prints an install link/hint and exits `1`. A stopped Docker daemon gets a "start Docker Desktop" hint.
+- `setup` creates the cluster with `networking.disableDefaultCNI: true` (`kind/cluster-config.yaml`), then applies the pinned Cilium 1.20.2 manifest `kind/cni/cilium.yaml` and waits for the Cilium DaemonSet, operator, Hubble Relay, Hubble UI and all nodes `Ready`. Cilium enforces NetworkPolicy; kindnet does not. Regenerate the manifest with `helm template cilium cilium/cilium --version 1.20.2 --namespace kube-system --include-crds --set ipam.mode=kubernetes --set kubeProxyReplacement=false --set operator.replicas=1 --set hubble.enabled=true --set hubble.relay.enabled=true --set hubble.ui.enabled=true --set envoy.enabled=false > kind/cni/cilium.yaml` when bumping the version.
+- If a cluster exists that was created with kindnet, `setup` exits `1` and asks for `cleanup` followed by `setup`.
+- `setup` writes a repo-local kubeconfig `kind/.kube/config` (dir `700`, file `600`) with `kind export kubeconfig`, on every run, so it stays in sync with the cluster. kind still updates the default `~/.kube/config` and its current-context as usual. The harness exports `KUBECONFIG` to that file (via `require_cluster` and `setup`), so every `kubectl` call, including those in `verify.sh`, targets only the escape-room cluster and never the user's current context. Each `verify.sh` pins `KUBECONFIG` to the same file and exits `1` if it is missing. `cleanup` removes `kind/.kube/` and `.room-state` (also when the cluster is already gone); `require_cluster` tells the user to run `setup` if the file is missing.
 - `start <level>` and `reset` re-break the level **and** remove it from `COMPLETED_LEVELS` in `.room-state`, so `status` never shows a broken level as completed. Only `cleanup` deletes `.room-state`.
 - `start <level>` first deletes the namespaces of all other levels (completed marks in `.room-state` are kept), so a previous level never interferes with the new one.
 - `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
+- `start` and `reset` wait (via `wait_for_level_rollout`, currently level-03 only; level 01 must stay broken) up to 120s for both Deployments to roll out before returning, so an immediate `verify` reports the real fault rather than "not ready". `solve` prints a warning (instead of silently continuing) if its rollout does not finish in 120s.
 - `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`start <next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `reset` and `cleanup`).
 - Levels are switched with `start <level>` only; there is intentionally no `next` command.
 
@@ -347,5 +356,6 @@ The human (repo owner) must review and explicitly approve before an agent procee
 .room-state
 *.kubeconfig
 kubeconfig
+kind/.kube/
 .DS_Store
 ```

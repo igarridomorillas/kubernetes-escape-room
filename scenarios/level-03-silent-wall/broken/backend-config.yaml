@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-nginx-config
+  namespace: escape-level-03
+  labels:
+    app: backend
+    component: backend
+    level: "03"
+data:
+  default.conf: |
+    server {
+      listen 9000;
+
+      location = /healthz {
+        return 200 'ok';
+      }
+
+      location = /api/data {
+        default_type application/json;
+        return 200 '{"data":"backend-connected"}';
+      }
+    }

@@ -121,7 +121,7 @@ scenarios/level-02-crashing-config/
 
 ## Milestone 4 — Level 03: "The Silent Wall" (Boss Level)
 
-**Status:** ⬜ Not started  
+**Status:** 🔍 In review  
 **Namespace:** `escape-level-03`  
 **Duration target:** 15–20 min
 
@@ -140,6 +140,8 @@ scenarios/level-03-silent-wall/
 ├── hints.md
 └── verify.sh        # Curls /api/data through frontend → {"data":"backend-connected"}
 ```
+
+**Prerequisite (Amendment 3 in `docs/design/plan.md`):** NetworkPolicy is only enforced with Cilium, which `setup` installs from `kind/cni/cilium.yaml` (clusters created with kindnet must be recreated).
 
 **Verification contract:**
 1. Probe pod in `escape-level-03` curls `http://frontend-service.escape-level-03.svc.cluster.local:80/api/data`

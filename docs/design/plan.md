@@ -205,3 +205,15 @@ COMPLETED_LEVELS=
 - **Hints:** Hint 2 uses plain `kubectl logs` first, because `--previous` is unreliable on kind (the older dead container is garbage-collected during CrashLoop backoff).
 - **Solution values:** memory request `48Mi` / limit `64Mi`.
 - **Verification:** `verify.sh` requires a completed rollout, an unchanged restart count over 15s, and the exact `/healthz` body `{"status":"healthy","database":"connected"}` from an in-cluster probe.
+
+### Amendment 3 — Cilium CNI for NetworkPolicy enforcement (M4)
+
+*Flagged for human review.*
+
+- **Problem:** kind's default CNI (kindnet) does not enforce NetworkPolicy, so the Level 03 policy fault would not block traffic.
+- **Decision:** the cluster is created with `networking.disableDefaultCNI: true`, and `setup` installs Cilium 1.20.2 from a pinned manifest, `kind/cni/cilium.yaml` (rendered with helm, no helm at runtime). kube-proxy is kept (`kubeProxyReplacement=false`), with Kubernetes IPAM and Envoy disabled to limit image pulls. Hubble, Hubble Relay and the Hubble UI are enabled so attendees and instructors can observe dropped flows.
+- **Alternatives considered:** Calico (heavier to maintain, same setup cost), Antrea (fewer references), Weave Net (unmaintained), or replacing the policy fault with a Service selector mismatch that kindnet can enforce.
+- **Harness safety:** the harness previously used whatever kubectl context was current. `setup` now writes a repo-local kubeconfig, `kind/.kube/config`, with `kind export kubeconfig`; the harness and every `verify.sh` use it through `KUBECONFIG`. kind still updates `~/.kube/config` as usual. The file holds client credentials, so it is gitignored and removed by `cleanup`.
+- **Subnets:** `kind/cluster-config.yaml` sets the pod and service subnets explicitly (`10.10.0.0/16`, `10.11.0.0/16`; kind's defaults are `10.244.0.0/16` and `10.96.0.0/16`). Edit them if they overlap with a VPN or Docker network on the machine.
+- **`cleanup` behaviour:** it now removes `kind/.kube/` and `.room-state` even when the cluster is already gone (it used to return early).
+- **Cost for attendees:** `setup` now pulls Cilium images and waits for nodes `Ready`. Existing clusters created with kindnet must be recreated (`cleanup`, then `setup`).

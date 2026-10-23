@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Pin kubectl to the escape-room cluster, never the user's current context
+KUBECONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/kind/.kube/config"
+if [[ ! -f "${KUBECONFIG}" ]]; then
+  echo "❌ Kind kubeconfig not found. Run: ./scripts/escape-room.sh setup"
+  exit 1
+fi
+export KUBECONFIG
+
 readonly NAMESPACE="escape-level-01"
 readonly APP_LABEL="app=payment-gateway"
 readonly SERVICE_URL="http://payment-gateway.${NAMESPACE}.svc.cluster.local:80/"
