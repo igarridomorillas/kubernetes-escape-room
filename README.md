@@ -59,8 +59,9 @@ kubernetes-escape-room/
     │   ├── 02-milestone-02.md       # Session 2: Level 01 — The Ghost Image
     │   ├── 03-milestone-03.md       # Session 3: Level 02 — The Crashing Config
     │   └── 04-milestone-04.md       # Session 4: Level 03 — The Silent Wall
-    ├── ai-prompts-cheatsheet.md     # SRE Copilot Prompt Pattern (coming soon)
-    └── pre-workshop-checklist.md    # Instructor & attendee checklist (coming soon)
+    ├── ai-prompts-cheatsheet.md     # SRE Copilot Prompt Pattern & AI guardrails (M5/M6, coming soon)
+    ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5, coming soon)
+    └── pre-workshop-checklist.md    # Instructor & attendee checklist (M6, coming soon)
 ```
 
 ---
@@ -79,4 +80,4 @@ kubectl version    # >= 1.28
 
 ## Status
 
-> 🚧 **Implementation in progress.** Levels 01 and 02 are implemented; levels 03 and 04 are not yet. See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.
+> 🚧 **Implementation in progress.** Levels 01–03 are implemented; level 04 (bonus) is not yet. Next: M5 (AI-assisted troubleshooting best practices, incl. optional MCP and CLI agents) and M6 (workshop docs). See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.

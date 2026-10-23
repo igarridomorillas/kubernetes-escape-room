@@ -86,4 +86,4 @@ Checklist for the human reviewer:
 
 ## ⏭️ Next Step
 
-Human review of Milestone 4, including a decision on the NetworkPolicy/CNI gap and the kubectl context pinning. After approval, proceed to **Milestone 5**: workshop docs and the AI cheatsheet.
+Human review of Milestone 4, including a decision on the NetworkPolicy/CNI gap and the kubectl context pinning. After approval, proceed to **Milestone 5**: AI-assisted troubleshooting best practices (workshop docs follow in Milestone 6).

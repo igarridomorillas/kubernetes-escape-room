@@ -165,9 +165,13 @@ COMPLETED_LEVELS=
 > **Prompt for Agent 4:**
 > *"Create Level 03 under `scenarios/level-03-silent-wall/` in namespace `escape-level-03`. Deploy a Frontend service and a Backend service. In `broken/`, make the Backend service target port mismatch (`targetPort: 8080` while container listens on `9000`), and apply a `NetworkPolicy` restricting ingress to an mismatched label. In `solution/`, align the targetPort and NetworkPolicy labels. Provide `incident.md`, `hints.md`, and `verify.sh` that curls the frontend endpoint."*
 
-### 📋 Milestone 5: Workshop Documentation & SRE AI Cheatsheet
+### 📋 Milestone 5: AI-Assisted Troubleshooting Best Practices
 > **Prompt for Agent 5:**
-> *"Create `docs/ai-prompts-cheatsheet.md` and `docs/pre-workshop-checklist.md`. The cheatsheet should teach attendees the 'SRE Copilot Prompt Pattern' (Context + Symptom + kubectl output + Desired State), show how to extract logs/describe outputs cleanly for free web AI copilots, and caution against common AI hallucinations in Kubernetes."*
+> *"Research current, credible, dated sources on LLM-assisted Kubernetes troubleshooting (chat assistants, retrieval over runbooks, MCP and CLI agents such as opencode). Extend `docs/ai-prompts-cheatsheet.md` with a repeatable evidence-based workflow (logs, events, metrics, manifests, recent changes), stage prompts, a challenge-the-AI-hypothesis exercise with facilitator notes, an evaluation rubric (correctness, time to useful evidence, missed signals, unsafe advice) and guardrails (AI output is a hypothesis, humans decide, no secrets, logs/events are untrusted input, no destructive or privileged actions without review). Record cited sources in `docs/ai-research-notes.md`, separating established from emerging practices. Treat MCP/CLI agents as optional and read-only by default; do not assume they are installed."*
+
+### 📋 Milestone 6: Workshop Documentation & Pre-Event Readiness
+> **Prompt for Agent 6:**
+> *"Create `docs/pre-workshop-checklist.md` (instructor pre-event steps, attendee prerequisites, fallbacks) and condense `docs/ai-prompts-cheatsheet.md` into a one-page A4 cheatsheet built on the 'SRE Copilot Prompt Pattern' (Context + Symptom + kubectl output + Desired State), clean log/describe extraction for free web copilots, and common Kubernetes AI hallucinations. Verify accuracy against the final scenarios."*
 
 ---
 
@@ -217,3 +221,7 @@ COMPLETED_LEVELS=
 - **Subnets:** `kind/cluster-config.yaml` sets the pod and service subnets explicitly (`10.10.0.0/16`, `10.11.0.0/16`; kind's defaults are `10.244.0.0/16` and `10.96.0.0/16`). Edit them if they overlap with a VPN or Docker network on the machine.
 - **`cleanup` behaviour:** it now removes `kind/.kube/` and `.room-state` even when the cluster is already gone (it used to return early).
 - **Cost for attendees:** `setup` now pulls Cilium images and waits for nodes `Ready`. Existing clusters created with kindnet must be recreated (`cleanup`, then `setup`).
+
+### Amendment 4 — Split M5 into M5 (AI practices) and M6 (docs)
+- **Change:** The original M5 (docs + cheatsheet) is split. M5 now covers AI-assisted troubleshooting best practices incl. MCP and CLI agents (opencode); the pre-workshop checklist and one-page cheatsheet move to M6.
+- **D4 extended, not replaced:** web copilots remain the baseline. MCP servers and CLI agents are optional, read-only by default, and scoped to the repo-local kubeconfig; setup stays outside the harness. Flagged for human review (rule 10).

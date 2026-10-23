@@ -93,8 +93,9 @@ kubernetes-escape-room/
     │   ├── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
     │   ├── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
     │   └── 04-milestone-04.md       # Session 4 log: Level 03 — The Silent Wall
-    ├── ai-prompts-cheatsheet.md
-    └── pre-workshop-checklist.md
+    ├── ai-prompts-cheatsheet.md     # M5/M6 (coming soon)
+    ├── ai-research-notes.md         # M5 (coming soon)
+    └── pre-workshop-checklist.md    # M6 (coming soon)
 ```
 
 ---
@@ -345,7 +346,8 @@ The human (repo owner) must review and explicitly approve before an agent procee
 | **M2 done** | After level-01 is implemented | Broken state shows `ImagePullBackOff`; verify fails; solve → verify passes |
 | **M3 done** | After level-02 is implemented | Both bugs independently visible; healthz endpoint verifies correctly |
 | **M4 done** | After level-03 is implemented | Both misconfiguration bugs visible; end-to-end probe works |
-| **M5 done** | After docs are created | Cheatsheet fits one A4 page; checklist covers all attendee prereqs |
+| **M5 done** | After AI best-practices content is written | Sources cited and dated; challenge-the-hypothesis exercise has facilitator notes; guardrails present; MCP/CLI-agent steps tested or flagged |
+| **M6 done** | After docs are created | Cheatsheet fits one A4 page; checklist covers all attendee prereqs |
 | **Pre-event** | 48h before workshop | Full smoke test of all levels on a clean machine |
 
 ---

@@ -1,6 +1,6 @@
 # 🚀 Kubernetes Escape Room — Implementation Milestones
 
-> **Timeline:** 5 milestones across the full implementation
+> **Timeline:** 6 milestones across the full implementation
 
 ---
 
@@ -9,8 +9,8 @@
 ```
 M1: Core Harness & Cluster Setup
   └── M2: Level 01 — The Ghost Image ──┐
-  └── M3: Level 02 — The Crashing Config ──┼──► M5: Workshop Docs & AI Cheatsheet
-  └── M4: Level 03 — The Silent Wall ──┘
+  └── M3: Level 02 — The Crashing Config ──┼──► M5: AI Troubleshooting Best Practices
+  └── M4: Level 03 — The Silent Wall ──┘            └── M6: Workshop Docs & Pre-Event Readiness
 ```
 
 ---
@@ -155,28 +155,68 @@ scenarios/level-03-silent-wall/
 
 ---
 
-## Milestone 5 — Workshop Docs & AI Cheatsheet
+## Milestone 5 — AI-Assisted Troubleshooting Best Practices
 
 **Status:** ⬜ Not started  
 **Depends on:** M1–M4 complete (or near-complete)
 
+**Goal:** Teach a repeatable, evidence-based way to use LLMs during an incident, from web copilots up to tool-connected workflows (MCP, CLI agents such as opencode). Web copilots remain the baseline (D1/D4); MCP and CLI agents are **optional** and must not be assumed available.
+
 **Deliverables:**
 ```
 docs/
-├── ai-prompts-cheatsheet.md    # SRE Copilot Prompt Pattern + hallucination warnings
+├── ai-prompts-cheatsheet.md    # Extended: workflow, stage prompts, guardrails, evaluation rubric
+└── ai-research-notes.md        # Cited sources (links + dates), established vs emerging practices
+scenarios/*/hints.md            # Facilitator notes / expected findings where they help
+```
+
+**Must cover:**
+- A repeatable workflow grounded in logs, events, metrics, manifests and recent changes (summarize evidence → hypothesize → decide next check → verify → communicate)
+- Example prompts per stage, incl. how to give context and ask for evidence-based, uncertainty-aware answers
+- At least one exercise to **challenge an AI-generated hypothesis** and correct it with new evidence (with facilitator notes and expected findings)
+- **MCP integration:** a Kubernetes MCP server, read-only by default, scoped to the repo-local kubeconfig (`kind/.kube/config`); what it adds over copy-paste
+- **CLI agents (opencode and similar):** tool-agnostic usage, permission modes, review before running commands
+- Strengths and failure modes of chat assistance, retrieval over runbooks, and agentic workflows
+- Guardrails: AI output is a hypothesis; verify against cluster evidence; humans own decisions; no secrets or sensitive incident data; logs/events are untrusted input (prompt injection); no destructive or privileged actions without explicit review
+- Evaluating whether AI helped: correctness, time to useful evidence, missed signals, unsafe or unsupported recommendations
+
+**Constraints:**
+- No new runtime dependencies in `scripts/escape-room.sh` or `verify.sh`; MCP/CLI-agent setup stays out of the harness
+- Claims in research notes cite credible primary sources with publication dates; unverified items are flagged
+- Any harness change updates `AGENTS.md` (rule 8); design changes go in `docs/design/plan.md` (rule 10)
+
+**Review checklist (human must approve before M6 starts):**
+- [ ] All cited links resolve and dates are accurate
+- [ ] Established practices are clearly separated from emerging ideas
+- [ ] The challenge-the-hypothesis exercise has facilitator notes and expected findings
+- [ ] Guardrails section covers all six rules above
+- [ ] MCP / opencode steps were tested, or are explicitly flagged as untested
+- [ ] Workflow is coherent with the existing level hints (Concept → Investigation → AI prompt)
+
+---
+
+## Milestone 6 — Workshop Docs & Pre-Event Readiness
+
+**Status:** ⬜ Not started  
+**Depends on:** M5 complete
+
+**Deliverables:**
+```
+docs/
+├── ai-prompts-cheatsheet.md    # One-page A4 condensed version of the M5 content
 └── pre-workshop-checklist.md   # Instructor setup & attendee prereqs
 ```
 
-**`ai-prompts-cheatsheet.md` must cover:**
+**`pre-workshop-checklist.md` must cover:**
+- Instructor pre-event: cluster creation, image availability, level smoke-tests
+- Attendee prereqs: `kubectl`, `kind`, Docker Desktop; optional MCP server / opencode setup
+- Fallback options if local cluster fails, or if MCP/CLI agents are unavailable (web copilot path)
+
+**Cheatsheet one-pager must keep:**
 - The **SRE Copilot Prompt Pattern**: `Context + Symptom + kubectl output + Desired State`
 - How to extract clean `kubectl logs` / `describe` output for web AI copilots
 - Common AI hallucinations in Kubernetes (e.g., `hostNetwork: true`, deleting NetworkPolicies)
-- Per-level prompt recipe examples
-
-**`pre-workshop-checklist.md` must cover:**
-- Instructor pre-event: cluster creation, image availability, level smoke-tests
-- Attendee prereqs: `kubectl`, `kind`, Docker Desktop
-- Fallback options if local cluster fails
+- The guardrails in short form
 
 **Review checklist (final human gate before event):**
 - [ ] Cheatsheet fits on one printed A4 page
@@ -194,3 +234,5 @@ docs/
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Runs out-of-the-box on macOS and Linux; no Python/jq |
 | **Scenario Sizing** | 3 Core + 1 Bonus | Tuned for 40–50 min collaborative pairing |
 | **Verification** | In-cluster synthetic probes | Idempotent, binary feedback (Escaped / Still Trapped) |
+| **AI Tooling Tiers** | Web copilot baseline; MCP and CLI agents (e.g. opencode) optional, read-only by default | Keeps zero-setup path for all attendees while teaching tool-connected workflows safely |
+| **Milestone Split** | M5 = AI best practices, M6 = docs & readiness | Research-heavy AI content needs its own review gate before final docs are condensed |
