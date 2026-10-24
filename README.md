@@ -2,7 +2,7 @@
 
 > **Can you debug your way out — with AI as your copilot?**
 
-A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to diagnose and fix intentionally broken Kubernetes scenarios, using free AI tools (Gemini, ChatGPT, Claude) as their debugging partners.
+A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to diagnose and fix intentionally broken Kubernetes scenarios, using AI copilots, CLI agents, and agentic harnesses as their debugging partners.
 
 ---
 
@@ -39,6 +39,7 @@ All levels run locally via a single CLI tool:
 ```
 kubernetes-escape-room/
 ├── AGENTS.md                        # Agent & contributor conventions
+├── README.md                        # Project overview & quickstart
 ├── scripts/
 │   └── escape-room.sh               # Main CLI harness (pure Bash, zero deps)
 ├── kind/

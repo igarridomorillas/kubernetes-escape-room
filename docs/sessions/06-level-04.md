@@ -1,8 +1,8 @@
 # Session 06 — Bonus Level 04: "The Ghost in the Microservices"
 
 > **Date:** 2026-10-24  
-> **Status:** 🔍 In review  
-> **Branch:** `feat/level-04`
+> **Status:** ✅ Completed & Merged  
+> **PR:** [#9](https://github.com/unai-ttxu/kubernetes-escape-room/pull/9) (`feat/level-04`)
 
 ---
 
@@ -40,9 +40,9 @@ Implement Bonus Level 04 ("The Ghost in the Microservices") under [`scenarios/le
 
 ## ✅ Verification & Smoke Test Lifecycle
 
-> Run on the local `escape-room` Kind cluster. Review items below remain unticked until the human reviewer approves (AGENTS.md rules 17–18).
+> Run on the local `escape-room` Kind cluster and reviewed/merged in PR #9.
 
-Checks that **were** run:
+Checks run:
 - `shellcheck` passed with 0 warnings on `scripts/escape-room.sh` and `scenarios/*/verify.sh`.
 - `./scripts/escape-room.sh start level-04`: built and loaded `escape-room/level-04-app:1.0.0`, rolled out `payment`, `cart`, `gateway` to `1/1 Running`.
 - `./scripts/escape-room.sh verify` (broken state): exited `1` reporting `tx-03 (coupon) -> HTTP 500`.
@@ -51,10 +51,16 @@ Checks that **were** run:
 - `./scripts/escape-room.sh reset` → `./scripts/escape-room.sh verify`: exited `1` and cleared `level-04` from `COMPLETED_LEVELS`.
 - Permissions verified (`chmod 750` on `scripts/escape-room.sh` and `scenarios/level-04-ghost-microservices/verify.sh`).
 
-Checklist for the human reviewer:
-- [ ] **Linting**: `shellcheck scripts/escape-room.sh scenarios/level-04-ghost-microservices/verify.sh` clean
-- [ ] **Broken State**: all 3 deployments `Running 1/1`; `kubectl logs -n escape-level-04 deployment/payment | wc -l` outputs `5000` with `NullPointerException` on `payment_method=coupon`
-- [ ] **Verification Failure**: `./scripts/escape-room.sh verify` exits `1` while broken
-- [ ] **Hints & AI Assist**: `./scripts/escape-room.sh hint` (1–3) and `./scripts/escape-room.sh ai-assist` render cleanly without spoilers
-- [ ] **Solution & Verification Success**: `./scripts/escape-room.sh solve` rolls out `payment` and `./scripts/escape-room.sh verify` exits `0`
-- [ ] **Reset**: `./scripts/escape-room.sh reset` restores broken state, clears `COMPLETED_LEVELS`, and `verify` exits `1`
+Review checklist:
+- [x] **Linting**: `shellcheck scripts/escape-room.sh scenarios/level-04-ghost-microservices/verify.sh` clean
+- [x] **Broken State**: all 3 deployments `Running 1/1`; `kubectl logs -n escape-level-04 deployment/payment | wc -l` outputs `5000` with `NullPointerException` on `payment_method=coupon`
+- [x] **Verification Failure**: `./scripts/escape-room.sh verify` exits `1` while broken
+- [x] **Hints & AI Assist**: `./scripts/escape-room.sh hint` (1–3) and `./scripts/escape-room.sh ai-assist` render cleanly without spoilers
+- [x] **Solution & Verification Success**: `./scripts/escape-room.sh solve` rolls out `payment` and `./scripts/escape-room.sh verify` exits `0`
+- [x] **Reset**: `./scripts/escape-room.sh reset` restores broken state, clears `COMPLETED_LEVELS`, and `verify` exits `1`
+
+---
+
+## ⏭️ Next Step
+
+Proceed to **Milestone 6**: Workshop Docs & Pre-Event Readiness (`docs/pre-workshop-checklist.md` and condensing `docs/ai-prompts-cheatsheet.md` to one A4 page).

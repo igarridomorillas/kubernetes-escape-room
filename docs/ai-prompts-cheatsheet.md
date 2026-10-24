@@ -114,16 +114,16 @@ The SRE Copilot Prompt Pattern is **Context + Symptom + kubectl output + Goal** 
 
 ### c) Kubernetes MCP server (optional, read-only)
 An MCP server lets the assistant call cluster tools itself instead of you copy-pasting output.
-- **What it adds over copy-paste:** it fetches the evidence itself (`pods_list`, `pods_get`, `pods_log`, `events_list`, `resources_get`, `resources_list`), which is sufficient to inspect every resource needed across Levels 01–03 (`Pod`, `Event`, `Deployment`, `ConfigMap`, `Service`, `Endpoints`/`EndpointSlice`, `NetworkPolicy`) without raw shell access.
+- **What it adds over copy-paste:** it fetches the evidence itself (`pods_list`, `pods_get`, `pods_log`, `events_list`, `resources_get`, `resources_list`), which is sufficient to inspect every resource needed across Levels 01–04 (`Pod`, `Event`, `Deployment`, `ConfigMap`, `Service`, `Endpoints`/`EndpointSlice`, `NetworkPolicy`) without raw shell access.
 - **What it costs:** a bigger attack surface (guardrails 5 and 6 apply to every tool call) and less visible reasoning. You still approve each call.
 - **Rules:**
   - **Read-only by default.** Enable `read_only = true` and `disable_destructive = true` so only tools annotated with `readOnlyHint=true` are exposed.
   - **Scope it to the workshop cluster only:** point `kubeconfig` at `kind/.kube/config` so it can never see your other contexts. The harness does the same for `kubectl`.
   - **Read-only mode limits the server, not the credentials.** The kubeconfig can still do everything its user can. Do not hand the MCP server a production kubeconfig.
-  - **Keep Secrets out of reach (`[[denied_resources]]`).** Block `v1/Secret` via GVK table entries, **but do not block `v1/ConfigMap`** (Level 02 requires inspecting `ConfigMap/order-config`).
+  - **Keep Secrets out of reach (`[[denied_resources]]`).** Block `v1/Secret` via GVK table entries, **but do not block `v1/ConfigMap`** (Levels 02 and 04 require inspecting `ConfigMap/order-config` and `ConfigMap/payment-config`).
   - Option names differ per server and version; check its README. See [`ai-research-notes.md`](ai-research-notes.md) (M1).
 
-Verified TOML configuration for `containers/kubernetes-mcp-server` (e.g., save as `mcp-config.toml` and pass via `--config mcp-config.toml` from the repository root):
+Verified TOML configuration for `containers/kubernetes-mcp-server` (e.g., save as `mcp-config.toml` and pass via `--config mcp-config.toml` from the repository root; the file is gitignored and local-only, do not commit it):
 ```toml
 # Strict read-only inspection profile scoped to the workshop cluster
 read_only = true
@@ -132,7 +132,7 @@ kubeconfig = "kind/.kube/config"
 toolsets = ["core", "config"]
 
 # Note: denied_resources must be an array of GVK tables (not ["v1/Secret"] strings).
-# Do NOT add v1/ConfigMap here — Level 02 requires reading ConfigMaps.
+# Do NOT add v1/ConfigMap here — Levels 02 and 04 require reading ConfigMaps.
 [[denied_resources]]
 group = ""
 version = "v1"
@@ -160,7 +160,7 @@ Agents run commands for you in a loop. Same rules, tool-agnostic:
 - **Read every command before approving.** Check the namespace and the context. Watch for pipes, `;`, `&&` and `xargs`.
 - **Set `KUBECONFIG=kind/.kube/config`** before launching the agent, so it can only reach the workshop cluster.
 - **Review the diff, not the story.** The agent's summary is not the evidence; the command output is.
-- Verified permission policy shapes for `opencode` (`opencode.json`; rule order matters — last matching rule wins, so catch-all `"*"` goes first and `deny` rules go last):
+- Verified permission policy shapes for `opencode` (`opencode.json`, gitignored and local-only; rule order matters — last matching rule wins, so catch-all `"*"` goes first and `deny` rules go last):
   ```json
   {
     "$schema": "https://opencode.ai/config.json",
@@ -214,6 +214,7 @@ kubectl get pods -n <ns> --show-labels
 kubectl describe pod -n <ns> -l app=<app>
 kubectl logs -n <ns> -l app=<app> --tail=30
 kubectl logs -n <ns> -l app=<app> --previous --tail=30
+kubectl logs -n <ns> deployment/<name> | grep -A 5 -E "ERROR|Exception"
 kubectl get endpoints -n <ns>
 kubectl get netpol -n <ns> -o yaml
 ```

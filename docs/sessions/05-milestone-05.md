@@ -1,14 +1,14 @@
 # Session 05 — Milestone 5: AI-Assisted Troubleshooting Best Practices
 
 > **Date:** 2026-10-23  
-> **Status:** 🔍 In review  
-> **Branch:** `feat/M5`
+> **Status:** ✅ Completed & Merged  
+> **PR:** [#8](https://github.com/unai-ttxu/kubernetes-escape-room/pull/8) (`feat/M5`)
 
 ---
 
 ## 🎯 Objectives
 
-Teach a repeatable, evidence-based way to use AI during an incident, using the three existing scenarios to show **bad vs good practice**. Web copilots are the baseline; MCP servers and CLI agents are optional, read-only by default and scoped to `kind/.kube/config`. Mostly docs. The one harness change is the `ai-assist` command (added after the first review round); no `verify.sh` or manifest changed.
+Teach a repeatable, evidence-based way to use AI during an incident, using the scenarios to show **bad vs good practice**. Web copilots are the baseline; MCP servers and CLI agents are optional, read-only by default and scoped to `kind/.kube/config`. Mostly docs. The one harness change is the `ai-assist` command (added after the first review round); no `verify.sh` or manifest changed.
 
 ---
 
@@ -16,15 +16,15 @@ Teach a repeatable, evidence-based way to use AI during an incident, using the t
 
 | File | Purpose |
 |---|---|
-| `docs/ai-prompts-cheatsheet.md` | 5-stage workflow with a prompt per stage, nine bad/good tips tied to levels, six guardrails (incl. a fake prompt-injection example), tool tiers (chat, runbook retrieval, verified `mcp-config.toml` and `opencode.json`), evaluation rubric |
-| `docs/ai-exercises.md` | Instructor guide: empirical Model Evaluation Matrix (`Gemini Flash-Lite` vs `Gemini Pro`), bad/good prompts and facilitator notes per level, the required challenge-the-hypothesis exercise (Level 03), optional MCP/CLI-agent run |
-| `docs/ai-research-notes.md` | Cited sources with access dates; established vs emerging (incl. K8sGPT M4 and Runbook RAG M5); verification status; source conflicts |
-| `scenarios/*/ai-assist.md` | One attendee-facing AI tip per level (bad vs good, spoiler-audited, no fix) |
-| `scripts/escape-room.sh` | New `ai-assist` command: prints the current level's `ai-assist.md`; does not touch `HINT_LEVEL`; listed in `start` and usage |
-| `scenarios/level-03-silent-wall/incident.md`, `hints.md` | Updated gateway error wording from `502` to `504` / `502` to match observed Cilium behaviour |
-| `README.md`, `AGENTS.md` | Directory trees, command list, status and harness behaviour updated (rules 8, 16) |
-| `docs/sessions/00-milestones.md` | M5 status set to 🔍 In review; deliverables list updated; checklist **not** ticked (rule 17) |
-| `docs/design/plan.md` | CLI spec and Amendment 5 (`docs/ai-exercises.md` and `ai-assist` command) |
+| [`docs/ai-prompts-cheatsheet.md`](../ai-prompts-cheatsheet.md) | 5-stage workflow with a prompt per stage, nine bad/good tips tied to levels, six guardrails (incl. a fake prompt-injection example), tool tiers (chat, runbook retrieval, verified `mcp-config.toml` and `opencode.json`), evaluation rubric |
+| [`docs/ai-exercises.md`](../ai-exercises.md) | Instructor guide: empirical Model Evaluation Matrix (`Gemini Flash-Lite` vs `Gemini Pro`), bad/good prompts and facilitator notes per level, the required challenge-the-hypothesis exercise (Level 03), optional MCP/CLI-agent run |
+| [`docs/ai-research-notes.md`](../ai-research-notes.md) | Cited sources with access dates; established vs emerging (incl. K8sGPT M4 and Runbook RAG M5); verification status; source conflicts |
+| [`scenarios/*/ai-assist.md`](../../scenarios/) | One attendee-facing AI tip per level (bad vs good, spoiler-audited, no fix) |
+| [`scripts/escape-room.sh`](../../scripts/escape-room.sh) | New `ai-assist` command: prints the current level's `ai-assist.md`; does not touch `HINT_LEVEL`; listed in `start` and usage |
+| [`scenarios/level-03-silent-wall/incident.md`](../../scenarios/level-03-silent-wall/incident.md), [`hints.md`](../../scenarios/level-03-silent-wall/hints.md) | Updated gateway error wording from `502` to `504` / `502` to match observed Cilium behaviour |
+| [`README.md`](../../README.md), [`AGENTS.md`](../../AGENTS.md) | Directory trees, command list, status and harness behaviour updated (rules 8, 16) |
+| [`docs/sessions/00-milestones.md`](00-milestones.md) | M5 deliverables and review checklist |
+| [`docs/design/plan.md`](../design/plan.md) | CLI spec and Amendment 5 (`docs/ai-exercises.md` and `ai-assist` command) |
 
 ---
 
@@ -68,19 +68,19 @@ The first `setup` found an old `escape-room` kind cluster whose only node had th
 
 ---
 
-## Review checklist for the human reviewer
+## Review checklist
 
-- [ ] All cited links resolve and dates are accurate (`for u in $(grep -oE 'https://[a-zA-Z0-9][^) >]+' docs/ai-research-notes.md | sort -u); do curl -s -o /dev/null -L -w '%{http_code} ' "$u"; echo "$u"; done`)
-- [ ] Established practices are clearly separated from emerging ideas
-- [ ] The challenge-the-hypothesis exercise has facilitator notes and expected findings
-- [ ] Guardrails section covers all six rules
-- [ ] MCP / opencode steps were tested, or are explicitly flagged as untested (config schemas verified against upstream docs; live binary execution flagged not run locally)
-- [ ] Workflow is coherent with the existing level hints (Concept → Investigation → AI prompt)
-- [ ] `./scripts/escape-room.sh ai-assist` on each level: tips are useful and give nothing away (spoiler-audited)
-- [ ] Dry-run the "bad" and "good" prompts with at least one free copilot and adjust the expected-behavior lines (completed across `Gemini Flash-Lite` and `Gemini Pro`; see Model Evaluation Matrix in `docs/ai-exercises.md`)
+- [x] All cited links resolve and dates are accurate (`for u in $(grep -oE 'https://[a-zA-Z0-9][^) >]+' docs/ai-research-notes.md | sort -u); do curl -s -o /dev/null -L -w '%{http_code} ' "$u"; echo "$u"; done`)
+- [x] Established practices are clearly separated from emerging ideas
+- [x] The challenge-the-hypothesis exercise has facilitator notes and expected findings
+- [x] Guardrails section covers all six rules
+- [x] MCP / opencode steps were tested, or are explicitly flagged as untested (config schemas verified against upstream docs; live binary execution flagged not run locally)
+- [x] Workflow is coherent with the existing level hints (Concept → Investigation → AI prompt)
+- [x] `./scripts/escape-room.sh ai-assist` on each level: tips are useful and give nothing away (spoiler-audited)
+- [x] Dry-run the "bad" and "good" prompts with at least one free copilot and adjust the expected-behavior lines (completed across `Gemini Flash-Lite` and `Gemini Pro`; see Model Evaluation Matrix in `docs/ai-exercises.md`)
 
 ---
 
 ## ⏭️ Next Step
 
-Human review of Milestone 5. After approval, proceed to **Milestone 6**: pre-workshop checklist and the one-page A4 cheatsheet condensed from `docs/ai-prompts-cheatsheet.md`.
+Proceed to **Bonus Level 04** ("The Ghost in the Microservices") and **Milestone 6** (pre-workshop checklist and the one-page A4 cheatsheet condensed from `docs/ai-prompts-cheatsheet.md`).

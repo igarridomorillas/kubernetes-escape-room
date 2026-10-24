@@ -3,3 +3,5 @@
 kubeconfig
 .DS_Store
 kind/.kube/
+mcp-config.toml
+opencode.json

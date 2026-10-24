@@ -10,7 +10,7 @@
 ### D1: Automation Harness Dependency Policy
 - **Contract:** Pure POSIX Bash (`#!/usr/bin/env bash`). Zero external runtime dependencies beyond standard macOS/Linux utilities (`curl`, `awk`, `sed`, `grep`).
 - **No `jq` or Python requirement** for the core runner to avoid local attendee environment failures.
-- Cluster state tracked via a local plain-text file `.room-state` containing `CURRENT_LEVEL` and `HINT_COUNT`.
+- Cluster state tracked via a local plain-text file `.room-state` containing `CURRENT_LEVEL`, `HINT_LEVEL`, and `COMPLETED_LEVELS`.
 
 ### D2: Multi-Tenancy & Namespace Isolation
 - Each scenario runs in its own dedicated namespace: `escape-level-01`, `escape-level-02`, `escape-level-03`, `escape-level-04`.
@@ -24,7 +24,7 @@
   - If passing: prints a unique ASCII badge and congratulatory flag.
 
 ### D4: Zero-API AI Pedagogy ("AI as Copilot, Not Autopilot")
-- Attendees use free browser copilots (Gemini free, ChatGPT, Claude) or CLI tools.
+- Attendees use web copilots (Gemini, ChatGPT, Claude), CLI agents, or MCP-enabled agentic harnesses.
 - Each scenario teaches a specific **prompt engineering pattern for incident response**:
   1. *Level 1 (Logs & Events):* Parsing cryptic Kubernetes status events (`describe pod`).
   2. *Level 2 (Stack Traces & Exit Codes):* Analyzing container exit codes (137 OOM vs 1) and crash logs.
@@ -177,7 +177,7 @@ COMPLETED_LEVELS=
 
 ### 📋 Milestone 6: Workshop Documentation & Pre-Event Readiness
 > **Prompt for Agent 6:**
-> *"Create `docs/pre-workshop-checklist.md` (instructor pre-event steps, attendee prerequisites, fallbacks) and condense `docs/ai-prompts-cheatsheet.md` into a one-page A4 cheatsheet built on the 'SRE Copilot Prompt Pattern' (Context + Symptom + kubectl output + Desired State), clean log/describe extraction for free web copilots, and common Kubernetes AI hallucinations. Verify accuracy against the final scenarios."*
+> *"Create `docs/pre-workshop-checklist.md` (instructor pre-event steps, attendee prerequisites, fallbacks) and condense `docs/ai-prompts-cheatsheet.md` into a one-page A4 cheatsheet built on the 'SRE Copilot Prompt Pattern' (Context + Symptom + kubectl output + Desired State), clean log/describe extraction for AI copilots and CLI agents, and common Kubernetes AI hallucinations. Verify accuracy against the final scenarios."*
 
 ---
 
@@ -185,7 +185,7 @@ COMPLETED_LEVELS=
 
 | Decision | Selected Option | Rationale |
 | :--- | :--- | :--- |
-| **Model Hosting** | Free Web/CLI Copilots (Gemini, ChatGPT, Claude) | Avoids laptop VRAM/RAM constraints and eliminates setup friction for 40 attendees. |
+| **Model Hosting** | Web Copilots, CLI Agents & Agentic Harnesses (Gemini, ChatGPT, Claude, OpenCode, MCP) | Avoids laptop VRAM/RAM constraints and eliminates local model setup friction for 40 attendees. |
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Guaranteed to run out of the box on macOS and Linux without installing Python packages or `jq`. |
 | **Scenario Sizing** | 3 Core Scenarios + 1 Bonus | Perfectly tuned for 40–50 minutes of collaborative pairing. |
 | **Verification Method** | Non-destructive in-cluster synthetic probes | Idempotent, testable, and gives immediate binary feedback (Escaped / Still Trapped). |
@@ -196,7 +196,7 @@ COMPLETED_LEVELS=
 
 ### Amendment 1 — Level 01 review hardening (M2)
 
-*Flagged for human review.*
+*Merged in PR #4; flagged for human review (rule 10).*
 
 - **Readiness check:** `verify.sh` uses `kubectl rollout status` instead of reading `items[0]` of the pod list, which was unreliable during rollouts (stale `ImagePullBackOff` pod from the old ReplicaSet).
 - **Image pinning:** the Level 01 solution uses `nginx:1.27-alpine` (was `nginx:alpine`) and the verify probe uses `curlimages/curl:8.11.1` (was `latest`), in line with the "pinned digests or well-known tags" constraint.
@@ -207,7 +207,7 @@ COMPLETED_LEVELS=
 
 ### Amendment 2 — Level 02 design details (M3)
 
-*Flagged for human review.*
+*Merged in PR #5; flagged for human review (rule 10).*
 
 - **Config injection:** the Deployment uses `envFrom: configMapRef` (not `configMapKeyRef`). With a `configMapKeyRef` and a missing key, Kubernetes never starts the container (`CreateContainerConfigError`), so the `KeyError: 'DATABASE_URL'` in the app logs described in the plan could not occur.
 - **Both bugs visible in the broken state:** the app checks `DATABASE_URL` first and logs the `KeyError`, then warms a 32MiB cache, and only then exits `1`. At `16Mi` the kernel OOM-kills it during the warm-up (Exit Code 137), so logs show the config error while `describe` shows `OOMKilled`. Fixing either bug alone exposes the other (verified).
@@ -218,7 +218,7 @@ COMPLETED_LEVELS=
 
 ### Amendment 3 — Cilium CNI for NetworkPolicy enforcement (M4)
 
-*Flagged for human review.*
+*Merged in PR #6; flagged for human review (rule 10).*
 
 - **Problem:** kind's default CNI (kindnet) does not enforce NetworkPolicy, so the Level 03 policy fault would not block traffic.
 - **Decision:** the cluster is created with `networking.disableDefaultCNI: true`, and `setup` installs Cilium 1.20.2 from a pinned manifest, `kind/cni/cilium.yaml` (rendered with helm, no helm at runtime). kube-proxy is kept (`kubeProxyReplacement=false`), with Kubernetes IPAM and Envoy disabled to limit image pulls. Hubble, Hubble Relay and the Hubble UI are enabled so attendees and instructors can observe dropped flows.
@@ -229,14 +229,23 @@ COMPLETED_LEVELS=
 - **Cost for attendees:** `setup` now pulls Cilium images and waits for nodes `Ready`. Existing clusters created with kindnet must be recreated (`cleanup`, then `setup`).
 
 ### Amendment 4 — Split M5 into M5 (AI practices) and M6 (docs)
+
+*Merged in PR #7; flagged for human review (rule 10).*
+
 - **Change:** The original M5 (docs + cheatsheet) is split. M5 now covers AI-assisted troubleshooting best practices incl. MCP and CLI agents (opencode); the pre-workshop checklist and one-page cheatsheet move to M6.
-- **D4 extended, not replaced:** web copilots remain the baseline. MCP servers and CLI agents are optional, read-only by default, and scoped to the repo-local kubeconfig; setup stays outside the harness. Flagged for human review (rule 10).
+- **D4 extended, not replaced:** web copilots remain the baseline. MCP servers and CLI agents are optional, read-only by default, and scoped to the repo-local kubeconfig; setup stays outside the harness.
 
 ### Amendment 5 — Facilitator notes in `docs/ai-exercises.md` and `ai-assist` command
+
+*Merged in PR #8; flagged for human review (rule 10).*
+
 - **Problem:** `extract_hint` in `scripts/escape-room.sh` prints everything between `## Hint N` headings, so notes appended to `hints.md` after Hint 3 would be shown to attendees.
-- **Decision:** M5 puts per-level bad/good prompts, expected findings and facilitator notes in a new instructor file, `docs/ai-exercises.md`, and adds attendee-facing AI tips in `scenarios/*/ai-assist.md` shown by `./scripts/escape-room.sh ai-assist` (independent of `HINT_LEVEL`). `scenarios/*/hints.md` is unchanged. Flagged for human review (rule 10).
+- **Decision:** M5 puts per-level bad/good prompts, expected findings and facilitator notes in a new instructor file, `docs/ai-exercises.md`, and adds attendee-facing AI tips in `scenarios/*/ai-assist.md` shown by `./scripts/escape-room.sh ai-assist` (independent of `HINT_LEVEL`). `scenarios/*/hints.md` is unchanged.
 
 ### Amendment 6 — Level 04 design details ("The Ghost in the Microservices")
+
+*Merged in PR #9; flagged for human review (rule 10).*
+
 - **Single self-contained image:** `scenarios/level-04-ghost-microservices/app/` builds `escape-room/level-04-app:1.0.0` (`python:3.12-alpine3.20`, stdlib only) and runs as `gateway`, `cart`, or `payment` via the `SERVICE_ROLE` environment variable.
 - **5,000-line log haystack & configuration bug:** On startup, `payment` emits 5,000 lines of structured checkout logs. In `broken/payment-deployment.yaml`, the container environment variable is mapped as `COUPON_VALIDATOR_URI` instead of `COUPON_VALIDATOR_URL` (referencing `ConfigMap/payment-config` key `COUPON_VALIDATOR_URL`). Health checks (`/healthz`) and non-coupon payments succeed, while `"coupon"` checkouts log an unhandled `NullPointerException` stack trace (buried inside the 5,000 lines and emitted on live `"coupon"` requests) and return `HTTP 500` cascading through `cart` and `gateway`.
-- **Immediate rollout on fix:** Placing the env name mismatch on `Deployment/payment` ensures that fixing the Deployment (or running `./scripts/escape-room.sh solve`) immediately triggers a Pod rollout without needing a manual `kubectl rollout restart`. `wait_for_level_rollout` in `scripts/escape-room.sh` waits for `payment`, `cart`, and `gateway` on `start` and `reset`. Flagged for human review (rule 10).
+- **Immediate rollout on fix:** Placing the env name mismatch on `Deployment/payment` ensures that fixing the Deployment (or running `./scripts/escape-room.sh solve`) immediately triggers a Pod rollout without needing a manual `kubectl rollout restart`. `wait_for_level_rollout` in `scripts/escape-room.sh` waits for `payment`, `cart`, and `gateway` on `start` and `reset`.

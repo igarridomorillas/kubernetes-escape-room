@@ -1,8 +1,8 @@
 # Session 02 — Milestone 2: Level 01: "The Ghost Image"
 
 > **Date:** 2026-10-18  
-> **Status:** 🔍 In review  
-> **Branch:** `feat/M2`  
+> **Status:** 🔍 In review (PR merged; human sign-off pending)  
+> **PR:** [#4](https://github.com/unai-ttxu/kubernetes-escape-room/pull/4) (`feat/M2`)  
 
 ---
 
@@ -60,7 +60,7 @@ Implement Level 01 ("The Ghost Image") under `scenarios/level-01-ghost-image/` t
 
 > An agent-run end-to-end smoke test passed on a local Kind cluster (start → verify 1 → hints 1–3 → solve → verify 0 ×3 → reset → verify 1; completed mark cleared on reset; no leaked probe pods). Items stay unticked until the human reviewer confirms.
 
-- [ ] **Linting**: `shellcheck scenarios/level-01-ghost-image/verify.sh scripts/escape-room.sh` passed with 0 errors/warnings (agent run via `koalaman/shellcheck` image: clean).
+- [ ] **Linting**: `shellcheck scenarios/level-01-ghost-image/verify.sh scripts/escape-room.sh` passed with 0 errors/warnings.
 - [ ] **Broken State**: `./scripts/escape-room.sh start level-01` injected broken manifests; pods reliably entered `ImagePullBackOff`.
 - [ ] **Verification Failure**: `./scripts/escape-room.sh verify` exited with code `1` while broken.
 - [ ] **Hint Parsing**: `./scripts/escape-room.sh hint` properly parsed and rendered Hints 1, 2, and 3 sequentially, warning on 4th invocation.

@@ -7,7 +7,7 @@
 ## How to run an exercise
 
 1. Attendee starts the level and reads the incident.
-2. **Round A, "bad":** they use the *bad* prompt below with a free copilot and note what comes back.
+2. **Round A, "bad":** they use the *bad* prompt below with an AI copilot or agent and note what comes back.
 3. **Round B, "good":** they collect the listed evidence, use the *good* prompt and compare.
 4. Debrief with the rubric (cheatsheet section 5).
 

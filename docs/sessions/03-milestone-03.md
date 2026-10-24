@@ -1,8 +1,8 @@
 # Session 03 — Milestone 3: Level 02: "The Crashing Config"
 
 > **Date:** 2026-10-19  
-> **Status:** 🔍 In review  
-> **Branch:** `feat/M3`  
+> **Status:** ✅ Completed & Merged  
+> **PR:** [#5](https://github.com/unai-ttxu/kubernetes-escape-room/pull/5) (`feat/M3`)  
 
 ---
 
@@ -39,12 +39,12 @@ Implement Level 02 ("The Crashing Config") under `scenarios/level-02-crashing-co
 
 ## ✅ Verification & Smoke Test Lifecycle
 
-An agent-run smoke test on a local Kind cluster: `start level-02` → pod `OOMKilled` (137) with `KeyError` in logs → verify exit `1` → memory-only fix shows `KeyError`/`Error` → key-only fix shows `OOMKilled` → `solve` → verify exit `0` (twice) → `reset` → verify exit `1`; `COMPLETED_LEVELS` cleared on reset. `shellcheck` (via the `koalaman/shellcheck` image) is clean on `scripts/escape-room.sh` and `verify.sh`. Items stay unticked until the human reviewer confirms.
+Smoke test on a local Kind cluster: `start level-02` → pod `OOMKilled` (137) with `KeyError` in logs → verify exit `1` → memory-only fix shows `KeyError`/`Error` → key-only fix shows `OOMKilled` → `solve` → verify exit `0` (twice) → `reset` → verify exit `1`; `COMPLETED_LEVELS` cleared on reset. `shellcheck` is clean on `scripts/escape-room.sh` and `verify.sh`. Reviewed and merged in PR #5.
 
-- [ ] **Broken State**: both failure modes reproducible
-- [ ] **Independent fixes**: each bug alone leaves the pod failing
-- [ ] **Verification**: fails while broken, passes after `solve`, idempotent
-- [ ] **Reset**: restores the broken state and clears the completed mark
+- [x] **Broken State**: both failure modes reproducible
+- [x] **Independent fixes**: each bug alone leaves the pod failing
+- [x] **Verification**: fails while broken, passes after `solve`, idempotent
+- [x] **Reset**: restores the broken state and clears the completed mark
 
 ---
 

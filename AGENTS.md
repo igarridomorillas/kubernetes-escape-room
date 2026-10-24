@@ -6,7 +6,7 @@
 
 ## Project Context
 
-This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40–50 min) for Platform/SRE/Software engineers. Attendees debug intentionally broken Kubernetes scenarios with the help of free AI copilots.
+This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40–50 min) for Platform/SRE/Software engineers. Attendees debug intentionally broken Kubernetes scenarios with the help of AI copilots, CLI agents, and agentic harnesses.
 
 **Key files:**
 - [`docs/design/plan.md`](docs/design/plan.md) — Full architecture & implementation plan (source of truth)
@@ -362,6 +362,7 @@ The human (repo owner) must review and explicitly approve before an agent procee
 | **M2 done** | After level-01 is implemented | Broken state shows `ImagePullBackOff`; verify fails; solve → verify passes |
 | **M3 done** | After level-02 is implemented | Both bugs independently visible; healthz endpoint verifies correctly |
 | **M4 done** | After level-03 is implemented | Both misconfiguration bugs visible; end-to-end probe works |
+| **Bonus done** | After level-04 is implemented | 5,000-line log haystack with `"coupon"` `NullPointerException`; 10-transaction checkout probe verifies correctly |
 | **M5 done** | After AI best-practices content is written | Sources cited and dated; challenge-the-hypothesis exercise has facilitator notes; guardrails present; MCP/CLI-agent steps tested or flagged |
 | **M6 done** | After docs are created | Cheatsheet fits one A4 page; checklist covers all attendee prereqs |
 | **Pre-event** | 48h before workshop | Full smoke test of all levels on a clean machine |
@@ -374,6 +375,8 @@ The human (repo owner) must review and explicitly approve before an agent procee
 .room-state
 *.kubeconfig
 kubeconfig
-kind/.kube/
 .DS_Store
+kind/.kube/
+mcp-config.toml
+opencode.json
 ```

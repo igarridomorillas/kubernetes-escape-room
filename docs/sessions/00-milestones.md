@@ -54,7 +54,7 @@ M1: Core Harness & Cluster Setup
 
 ## Milestone 2 — Level 01: "The Ghost Image" (Warm-up)
 
-**Status:** 🔍 In review  
+**Status:** 🔍 In review (PR #4 merged; human sign-off pending)  
 **Namespace:** `escape-level-01`  
 **Duration target:** 8–10 min
 
@@ -68,6 +68,7 @@ scenarios/level-01-ghost-image/
 ├── solution/        # Fixed manifest (nginx:1.27-alpine)
 ├── incident.md      # Realistic PagerDuty-style alert
 ├── hints.md         # 3 tiered hints + AI prompt recipe
+├── ai-assist.md     # AI copilot tip (added in M5)
 └── verify.sh        # Probe: pod Running + HTTP 200
 ```
 
@@ -87,7 +88,7 @@ scenarios/level-01-ghost-image/
 
 ## Milestone 3 — Level 02: "The Crashing Config" (Core)
 
-**Status:** 🔍 In review  
+**Status:** 🔍 In review (PR #5 merged; human sign-off pending)  
 **Namespace:** `escape-level-02`  
 **Duration target:** 12–15 min
 
@@ -105,6 +106,7 @@ scenarios/level-02-crashing-config/
 ├── solution/        # Fixed key name + 64Mi memory limit
 ├── incident.md
 ├── hints.md
+├── ai-assist.md     # AI copilot tip (added in M5)
 └── verify.sh        # /healthz returns {"status":"healthy","database":"connected"}
 ```
 
@@ -122,7 +124,7 @@ scenarios/level-02-crashing-config/
 
 ## Milestone 4 — Level 03: "The Silent Wall" (Boss Level)
 
-**Status:** 🔍 In review  
+**Status:** 🔍 In review (PR #6 merged; human sign-off pending)  
 **Namespace:** `escape-level-03`  
 **Duration target:** 15–20 min
 
@@ -139,6 +141,7 @@ scenarios/level-03-silent-wall/
 ├── solution/        # Aligned port + corrected NetworkPolicy
 ├── incident.md
 ├── hints.md
+├── ai-assist.md     # AI copilot tip (added in M5)
 └── verify.sh        # Curls /api/data through frontend → {"data":"backend-connected"}
 ```
 
@@ -158,7 +161,7 @@ scenarios/level-03-silent-wall/
 
 ## Bonus — Level 04: "The Ghost in the Microservices"
 
-**Status:** 🔍 In review  
+**Status:** 🔍 In review (PR #9 merged; human sign-off pending)  
 **Namespace:** `escape-level-04`  
 **Duration target:** 15–20 min (optional bonus)
 
@@ -191,7 +194,7 @@ scenarios/level-04-ghost-microservices/
 
 ## Milestone 5 — AI-Assisted Troubleshooting Best Practices
 
-**Status:** 🔍 In review  
+**Status:** 🔍 In review (PR #8 merged; human sign-off pending)  
 **Depends on:** M1–M4 complete (or near-complete)
 
 **Goal:** Teach a repeatable, evidence-based way to use LLMs during an incident, from web copilots up to tool-connected workflows (MCP, CLI agents such as opencode). Web copilots remain the baseline (D1/D4); MCP and CLI agents are **optional** and must not be assumed available.
@@ -266,7 +269,7 @@ docs/
 
 | Decision | Selected Option | Rationale |
 |---|---|---|
-| **Model Hosting** | Free Web/CLI Copilots (Gemini, ChatGPT, Claude) | No VRAM/RAM constraints; zero setup friction for 40 attendees |
+| **Model Hosting** | Web Copilots, CLI Agents & Agentic Harnesses (Gemini, ChatGPT, Claude, OpenCode, MCP) | No local model VRAM/RAM constraints; flexible setup for 40 attendees |
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Runs out-of-the-box on macOS and Linux; no Python/jq |
 | **Scenario Sizing** | 3 Core + 1 Bonus | Tuned for 40–50 min collaborative pairing |
 | **Verification** | In-cluster synthetic probes | Idempotent, binary feedback (Escaped / Still Trapped) |
