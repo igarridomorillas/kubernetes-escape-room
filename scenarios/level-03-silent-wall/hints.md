@@ -36,7 +36,7 @@ Copy and paste the following prompt into your AI copilot:
 
 ```text
 I am troubleshooting an incident in a Kubernetes cluster. Pods are all Running 1/1,
-but the frontend returns 502 Bad Gateway when it calls the backend.
+but the frontend returns 504 Gateway Time-out (or 502 Bad Gateway) when it calls the backend.
 
 [Context]
 Namespace: escape-level-03
@@ -45,7 +45,7 @@ Backend: Deployment backend (container listens on a port), Service backend-servi
 NetworkPolicy: backend-firewall (selects the backend pods)
 
 [Symptom]
-frontend-service returns 502 for GET /api/data. Pods are Running and Ready.
+frontend-service returns 504 / 502 for GET /api/data. Pods are Running and Ready.
 
 [kubectl output]
 <PASTE OUTPUT OF: kubectl get endpoints -n escape-level-03>

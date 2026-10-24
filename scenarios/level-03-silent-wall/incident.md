@@ -10,12 +10,12 @@
 
 ### Incident Summary
 The synthetic monitor for `GET /api/data` through the storefront reports
-`502 Bad Gateway` for all end-user requests. Every pod in the namespace shows
+`504 Gateway Time-out` / `502 Bad Gateway` for all end-user requests. Every pod in the namespace shows
 as healthy, yet customers cannot load their data.
 
 ### Telemetry & Impact
 - **Pod Health:** all pods `Running`, `1/1` ready
-- **Error Rate:** 100% of `/api/data` requests returning `502`
+- **Error Rate:** 100% of `/api/data` requests failing (`504` / `502`)
 - **Customer Impact:** Account and order pages are blank for all users
 
 ### Triage Runbook

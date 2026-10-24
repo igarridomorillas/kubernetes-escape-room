@@ -415,6 +415,7 @@ cmd_start() {
   echo -e "${BOLD}Useful commands:${NC}"
   echo -e "  ${CYAN}./scripts/escape-room.sh status${NC}   — see pod states"
   echo -e "  ${CYAN}./scripts/escape-room.sh hint${NC}     — get your first hint"
+  echo -e "  ${CYAN}./scripts/escape-room.sh ai-assist${NC} — tips for using an AI copilot on this level"
   echo -e "  ${CYAN}./scripts/escape-room.sh verify${NC}   — check if you've fixed it"
   echo ""
 }
@@ -516,6 +517,39 @@ extract_hint() {
     }
     found { print }
   ' "${file}"
+}
+
+# ─── Command: ai-assist ───────────────────────────────────────────────────────
+
+# Prints the level's AI tip. Independent of the hint counter (HINT_LEVEL).
+cmd_ai_assist() {
+  require_state
+
+  local level
+  level="$(read_state CURRENT_LEVEL)"
+
+  local dir=""
+  for d in "${SCENARIOS_DIR}/${level}-"*/; do
+    dir="${d}"
+    break
+  done
+
+  if [[ -z "${dir}" || ! -d "${dir}" ]]; then
+    echo -e "${RED}✗ Scenario directory not found for '${level}'.${NC}"
+    exit 1
+  fi
+
+  local tip_file="${dir}ai-assist.md"
+  if [[ ! -f "${tip_file}" ]]; then
+    echo -e "${RED}✗ No AI tip file found for '${level}'.${NC}"
+    exit 1
+  fi
+
+  echo ""
+  echo -e "${CYAN}${BOLD}🤖  AI assist — ${level}${NC}"
+  echo ""
+  cat "${tip_file}"
+  echo ""
 }
 
 # ─── Command: verify ─────────────────────────────────────────────────────────
@@ -696,6 +730,7 @@ cmd_usage() {
   echo -e "  ${CYAN}start <level>${NC}      Begin a level (e.g. level-01, level-02, level-03)"
   echo -e "  ${CYAN}status${NC}             Show active scenario, pod statuses, troubleshooting tips"
   echo -e "  ${CYAN}hint${NC}               Display the next progressive hint (1 → 2 → 3)"
+  echo -e "  ${CYAN}ai-assist${NC}          Show an AI copilot tip for the current level (does not use a hint)"
   echo -e "  ${CYAN}verify${NC}             Run the scenario verification probe"
   echo -e "  ${CYAN}solve${NC}              Apply the reference solution (instructor/emergency only)"
   echo -e "  ${CYAN}reset${NC}              Re-inject the current level's broken state"
@@ -714,6 +749,7 @@ main() {
     start)   cmd_start "${2:-}" ;;
     status)  cmd_status ;;
     hint)    cmd_hint ;;
+    ai-assist) cmd_ai_assist ;;
     verify)  cmd_verify ;;
     solve)   cmd_solve ;;
     reset)   cmd_reset ;;

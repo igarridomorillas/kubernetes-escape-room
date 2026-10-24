@@ -129,7 +129,7 @@ scenarios/level-02-crashing-config/
 1. Backend Service `targetPort: 8080` but container listens on `9000`
 2. `NetworkPolicy` allows ingress from `role: api-consumer` but Frontend Pod is labeled `role: web-frontend`
 
-**Symptom:** All pods `Running 1/1`, but `curl` frontend → backend returns `502` / times out
+**Symptom:** All pods `Running 1/1`, but `curl` frontend → backend returns `504` / `502`
 
 **Deliverables:**
 ```
@@ -157,7 +157,7 @@ scenarios/level-03-silent-wall/
 
 ## Milestone 5 — AI-Assisted Troubleshooting Best Practices
 
-**Status:** ⬜ Not started  
+**Status:** 🔍 In review  
 **Depends on:** M1–M4 complete (or near-complete)
 
 **Goal:** Teach a repeatable, evidence-based way to use LLMs during an incident, from web copilots up to tool-connected workflows (MCP, CLI agents such as opencode). Web copilots remain the baseline (D1/D4); MCP and CLI agents are **optional** and must not be assumed available.
@@ -166,8 +166,10 @@ scenarios/level-03-silent-wall/
 ```
 docs/
 ├── ai-prompts-cheatsheet.md    # Extended: workflow, stage prompts, guardrails, evaluation rubric
-└── ai-research-notes.md        # Cited sources (links + dates), established vs emerging practices
-scenarios/*/hints.md            # Facilitator notes / expected findings where they help
+├── ai-research-notes.md        # Cited sources (links + dates), established vs emerging practices
+└── ai-exercises.md             # Instructor guide: bad vs good prompts per level, challenge exercise, facilitator notes
+scenarios/*/ai-assist.md        # Attendee AI tip per level, shown by `./scripts/escape-room.sh ai-assist`
+# Facilitator notes live in ai-exercises.md, not hints.md (the hint command prints everything under a hint heading)
 ```
 
 **Must cover:**

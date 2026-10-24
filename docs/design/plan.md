@@ -90,14 +90,14 @@
 
 ### Level 03: "The Silent Wall" (Boss Level)
 
-- **Simulated Incident:** Pager alert: *"CRITICAL: frontend-api is returning 502 Bad Gateway to end users. All pods are reporting Running 1/1."*
+- **Simulated Incident:** Pager alert: *"CRITICAL: frontend-service is returning 504 Gateway Time-out / 502 Bad Gateway to end users. All pods are reporting Running 1/1."*
 - **Intentional Bug:**
   1. Frontend Pod and Backend Pod are both healthy (`Running 1/1`).
   2. Backend Service has `spec.ports[0].targetPort: 8080`, but the Backend container listens on port `9000`.
   3. A strict `NetworkPolicy` (`backend-firewall`) was applied that only allows ingress from pods labeled `role: api-consumer`, but Frontend Pod is labeled `role: web-frontend`.
 - **Attendee Symptoms:**
   - `kubectl get pods -n escape-level-03` shows everything green (`Running`).
-  - Executing curl from Frontend pod to Backend times out or returns `502`.
+  - Executing curl through Frontend to Backend returns `504` (timeout while dropped by `NetworkPolicy`) or `502` (connection refused while `targetPort` is mismatched).
 - **Verification Logic (`verify.sh`):**
   1. Probe pod runs inside `escape-level-03`: `curl -fsS http://frontend-service.escape-level-03.svc.cluster.local:80/api/data`.
   2. Returns `HTTP 200` with payload `{"data":"backend-connected"}`.
@@ -132,6 +132,7 @@ The `scripts/escape-room.sh` tool provides a unified, color-coded terminal exper
 ./scripts/escape-room.sh start <level>         # e.g., level-01. Resets namespace, applies broken manifests, shows incident alert
 ./scripts/escape-room.sh status                # Shows active scenario, pod statuses, and troubleshooting commands
 ./scripts/escape-room.sh hint                  # Displays next progressive hint (1 -> 2 -> 3)
+./scripts/escape-room.sh ai-assist             # Shows AI copilot tip for the current level (independent of hint counter)
 ./scripts/escape-room.sh verify                # Runs scenario verify.sh, prints ASCII celebration banner + next steps if fixed
 ./scripts/escape-room.sh solve                 # (Emergency/Instructor) Applies reference solution
 ./scripts/escape-room.sh reset                 # Re-injects current level's broken state (and clears its completed mark)
@@ -225,3 +226,7 @@ COMPLETED_LEVELS=
 ### Amendment 4 — Split M5 into M5 (AI practices) and M6 (docs)
 - **Change:** The original M5 (docs + cheatsheet) is split. M5 now covers AI-assisted troubleshooting best practices incl. MCP and CLI agents (opencode); the pre-workshop checklist and one-page cheatsheet move to M6.
 - **D4 extended, not replaced:** web copilots remain the baseline. MCP servers and CLI agents are optional, read-only by default, and scoped to the repo-local kubeconfig; setup stays outside the harness. Flagged for human review (rule 10).
+
+### Amendment 5 — Facilitator notes in `docs/ai-exercises.md` and `ai-assist` command
+- **Problem:** `extract_hint` in `scripts/escape-room.sh` prints everything between `## Hint N` headings, so notes appended to `hints.md` after Hint 3 would be shown to attendees.
+- **Decision:** M5 puts per-level bad/good prompts, expected findings and facilitator notes in a new instructor file, `docs/ai-exercises.md`, and adds attendee-facing AI tips in `scenarios/*/ai-assist.md` shown by `./scripts/escape-room.sh ai-assist` (independent of `HINT_LEVEL`). `scenarios/*/hints.md` is unchanged. Flagged for human review (rule 10).
