@@ -329,6 +329,7 @@ wait_for_level_rollout() {
   local level="$1" namespace="$2"
   case "${level}" in
     level-03) wait_for_deployments "${namespace}" backend frontend ;;
+    level-04) wait_for_deployments "${namespace}" payment cart gateway ;;
   esac
 }
 
@@ -727,7 +728,7 @@ cmd_usage() {
   echo ""
   echo -e "${BOLD}Commands:${NC}"
   echo -e "  ${CYAN}setup${NC}              Check prerequisites and create the Kind cluster"
-  echo -e "  ${CYAN}start <level>${NC}      Begin a level (e.g. level-01, level-02, level-03)"
+  echo -e "  ${CYAN}start <level>${NC}      Begin a level (e.g. level-01, level-02, level-03, level-04)"
   echo -e "  ${CYAN}status${NC}             Show active scenario, pod statuses, troubleshooting tips"
   echo -e "  ${CYAN}hint${NC}               Display the next progressive hint (1 → 2 → 3)"
   echo -e "  ${CYAN}ai-assist${NC}          Show an AI copilot tip for the current level (does not use a hint)"

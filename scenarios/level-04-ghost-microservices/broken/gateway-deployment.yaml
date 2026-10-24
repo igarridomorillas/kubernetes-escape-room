@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: escape-level-04
+  labels:
+    app: gateway
+    component: frontend
+    level: "04"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: gateway
+        component: frontend
+        level: "04"
+    spec:
+      containers:
+        - name: gateway
+          image: escape-room/level-04-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVICE_ROLE
+              value: "gateway"
+            - name: CART_SERVICE_URL
+              value: "http://cart.escape-level-04.svc.cluster.local:8080/cart/checkout"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi

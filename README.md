@@ -15,13 +15,13 @@ Each level presents a realistic incident alert. Pods are broken, traffic is down
 | 01 | The Ghost Image | ⭐ Warm-up | `ImagePullBackOff` / bad image tag | ✅ Available |
 | 02 | The Crashing Config | ⭐⭐ Core | `CrashLoopBackOff` / OOMKill + ConfigMap mismatch | ✅ Available |
 | 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch | ✅ Available |
-| 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | 🚧 Planned |
+| 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | ✅ Available |
 
 All levels run locally via a single CLI tool:
 
 ```bash
 ./scripts/escape-room.sh setup          # spin up a Kind cluster
-./scripts/escape-room.sh start level-01 # inject the broken scenario (or level-02, level-03)
+./scripts/escape-room.sh start level-01 # inject the broken scenario (or level-02, level-03, level-04)
 ./scripts/escape-room.sh hint           # get a progressive hint
 ./scripts/escape-room.sh ai-assist      # tip for using an AI copilot on this level
 ./scripts/escape-room.sh verify         # check if you've escaped
@@ -30,7 +30,7 @@ All levels run locally via a single CLI tool:
 ./scripts/escape-room.sh cleanup        # tear down the Kind cluster
 ```
 
-`start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Level 02 ships a small app that `start` builds and loads into the cluster for you (no registry needed).
+`start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Levels 02 and 04 ship small apps that `start` builds and loads into the cluster for you (no registry needed).
 
 ---
 
@@ -60,7 +60,8 @@ kubernetes-escape-room/
     │   ├── 02-milestone-02.md       # Session 2: Level 01 — The Ghost Image
     │   ├── 03-milestone-03.md       # Session 3: Level 02 — The Crashing Config
     │   ├── 04-milestone-04.md       # Session 4: Level 03 — The Silent Wall
-    │   └── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
+    │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
+    │   └── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
     ├── ai-prompts-cheatsheet.md     # AI workflow, bad vs good tips & guardrails (M5; M6 condenses to one page)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
@@ -83,4 +84,4 @@ kubectl version    # >= 1.28
 
 ## Status
 
-> 🚧 **Implementation in progress.** Levels 01–03 and M5 (AI-assisted troubleshooting best practices, incl. optional MCP and CLI agents) are implemented; level 04 (bonus) is not yet. Next: M6 (workshop docs & one-page cheatsheet). See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.
+> 🚧 **Implementation in progress.** Levels 01–04 (including the bonus Level 04) and M5 (AI-assisted troubleshooting best practices, incl. optional MCP and CLI agents) are implemented. Next: M6 (workshop docs & one-page cheatsheet). See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.

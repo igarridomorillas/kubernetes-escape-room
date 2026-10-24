@@ -86,7 +86,13 @@ kubernetes-escape-room/
 │   │   ├── ai-assist.md
 │   │   └── verify.sh
 │   └── level-04-ghost-microservices/  # Optional bonus
-│       └── ...
+│       ├── app/                     # Self-contained 3-tier app + Dockerfile (built by `start`)
+│       ├── broken/
+│       ├── solution/
+│       ├── incident.md
+│       ├── hints.md
+│       ├── ai-assist.md
+│       └── verify.sh
 └── docs/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
@@ -96,7 +102,8 @@ kubernetes-escape-room/
     │   ├── 02-milestone-02.md       # Session 2 log: Level 01 — The Ghost Image
     │   ├── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
     │   ├── 04-milestone-04.md       # Session 4 log: Level 03 — The Silent Wall
-    │   └── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
+    │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
+    │   └── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
     ├── ai-prompts-cheatsheet.md     # AI workflow, bad vs good tips, guardrails (M5; M6 condenses)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
@@ -133,7 +140,7 @@ kubectl version        # >= 1.28
 
 ```bash
 # Load and break a specific level
-./scripts/escape-room.sh start level-01     # or level-02, level-03
+./scripts/escape-room.sh start level-01     # or level-02, level-03, level-04
 
 # Check current status
 ./scripts/escape-room.sh status
@@ -290,8 +297,8 @@ exit 0
 - `setup` writes a repo-local kubeconfig `kind/.kube/config` (dir `700`, file `600`) with `kind export kubeconfig`, on every run, so it stays in sync with the cluster. kind still updates the default `~/.kube/config` and its current-context as usual. The harness exports `KUBECONFIG` to that file (via `require_cluster` and `setup`), so every `kubectl` call, including those in `verify.sh`, targets only the escape-room cluster and never the user's current context. Each `verify.sh` pins `KUBECONFIG` to the same file and exits `1` if it is missing. `cleanup` removes `kind/.kube/` and `.room-state` (also when the cluster is already gone); `require_cluster` tells the user to run `setup` if the file is missing.
 - `start <level>` and `reset` re-break the level **and** remove it from `COMPLETED_LEVELS` in `.room-state`, so `status` never shows a broken level as completed. Only `cleanup` deletes `.room-state`.
 - `start <level>` first deletes the namespaces of all other levels (completed marks in `.room-state` are kept), so a previous level never interferes with the new one.
-- `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
-- `start` and `reset` wait (via `wait_for_level_rollout`, currently level-03 only; level 01 must stay broken) up to 120s for both Deployments to roll out before returning, so an immediate `verify` reports the real fault rather than "not ready". `solve` prints a warning (instead of silently continuing) if its rollout does not finish in 120s.
+- `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`, `escape-room/level-04-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
+- `start` and `reset` wait (via `wait_for_level_rollout`, currently `level-03` and `level-04`; level 01 must stay broken) up to 120s for the Deployments to roll out before returning, so an immediate `verify` reports the real fault rather than "not ready". `solve` prints a warning (instead of silently continuing) if its rollout does not finish in 120s.
 - `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`start <next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `reset` and `cleanup`).
 - `ai-assist` prints `scenarios/<level>-*/ai-assist.md` for the current level (`cat`, no parsing). It is independent of `HINT_LEVEL` and never changes `.room-state`. `ai-assist.md` follows the hint discipline: no fix, no root cause, no correct values. It is a separate file from `hints.md` on purpose, since `extract_hint` prints everything under a hint heading. `start` lists the command in its "Useful commands".
 - Levels are switched with `start <level>` only; there is intentionally no `next` command.

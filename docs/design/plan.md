@@ -114,12 +114,17 @@
 - **Simulated Incident:** Pager alert: *"HIGH: Intermittent 500 Internal Server Errors in checkout flow under specific payment types."*
 - **Intentional Bug:**
   - 3-tier setup: `gateway` $\to$ `cart` $\to$ `payment`.
-  - When payment method is `"coupon"`, `payment` service throws an unhandled NullPointerException buried inside 5,000 lines of standard log traffic.
+  - When payment method is `"coupon"`, `payment` service throws an unhandled NullPointerException buried inside 5,000 lines of standard log traffic (caused by `Deployment/payment` injecting `COUPON_VALIDATOR_URI` instead of `COUPON_VALIDATOR_URL` from `ConfigMap/payment-config`).
 - **Attendee Symptoms:**
-  - Standard healthchecks pass.
-  - Only synthetic requests with `{"payment_method":"coupon"}` trigger the error.
+  - Standard healthchecks pass (`Running 1/1`).
+  - Only synthetic requests with `{"payment_method":"coupon"}` trigger the error (`HTTP 500`).
 - **Verification Logic (`verify.sh`):**
   - Sends 10 diverse synthetic transactions through `gateway`, including coupon and credit card payloads. All must return `HTTP 200`.
+- **Tiered Hints:**
+  - *Hint 1 (Conceptual):* Every pod is `Running 1/1` and `/healthz` passes, yet `gateway` intermittently returns `HTTP 500`. Follow the call chain (`gateway` $\to$ `cart` $\to$ `payment`) and beware of the log haystack (`--tail=20` only shows healthy traffic).
+  - *Hint 2 (Kubernetes):* Filter each tier's logs for `ERROR` (`kubectl logs -n escape-level-04 deployment/<tier> | grep ERROR`), then extract the stack trace from `payment` (`kubectl logs -n escape-level-04 deployment/payment | grep -A 5 -E "ERROR|Exception"`) and compare the required env var with `Deployment/payment` and `ConfigMap/payment-config`.
+  - *Hint 3 (AI Prompt):*
+    > *"I am troubleshooting intermittent HTTP 500 errors in a 3-tier Kubernetes checkout pipeline (`gateway -> cart -> payment`). Here is the grep-filtered exception from `payment` logs: `<paste stack trace>`, the `payment` Deployment YAML: `<paste deployment>`, and `payment-config` ConfigMap: `<paste configmap>`. Why do only coupon checkouts fail and what minimal change fixes it?"*
 
 ---
 
@@ -230,3 +235,8 @@ COMPLETED_LEVELS=
 ### Amendment 5 — Facilitator notes in `docs/ai-exercises.md` and `ai-assist` command
 - **Problem:** `extract_hint` in `scripts/escape-room.sh` prints everything between `## Hint N` headings, so notes appended to `hints.md` after Hint 3 would be shown to attendees.
 - **Decision:** M5 puts per-level bad/good prompts, expected findings and facilitator notes in a new instructor file, `docs/ai-exercises.md`, and adds attendee-facing AI tips in `scenarios/*/ai-assist.md` shown by `./scripts/escape-room.sh ai-assist` (independent of `HINT_LEVEL`). `scenarios/*/hints.md` is unchanged. Flagged for human review (rule 10).
+
+### Amendment 6 — Level 04 design details ("The Ghost in the Microservices")
+- **Single self-contained image:** `scenarios/level-04-ghost-microservices/app/` builds `escape-room/level-04-app:1.0.0` (`python:3.12-alpine3.20`, stdlib only) and runs as `gateway`, `cart`, or `payment` via the `SERVICE_ROLE` environment variable.
+- **5,000-line log haystack & configuration bug:** On startup, `payment` emits 5,000 lines of structured checkout logs. In `broken/payment-deployment.yaml`, the container environment variable is mapped as `COUPON_VALIDATOR_URI` instead of `COUPON_VALIDATOR_URL` (referencing `ConfigMap/payment-config` key `COUPON_VALIDATOR_URL`). Health checks (`/healthz`) and non-coupon payments succeed, while `"coupon"` checkouts log an unhandled `NullPointerException` stack trace (buried inside the 5,000 lines and emitted on live `"coupon"` requests) and return `HTTP 500` cascading through `cart` and `gateway`.
+- **Immediate rollout on fix:** Placing the env name mismatch on `Deployment/payment` ensures that fixing the Deployment (or running `./scripts/escape-room.sh solve`) immediately triggers a Pod rollout without needing a manual `kubectl rollout restart`. `wait_for_level_rollout` in `scripts/escape-room.sh` waits for `payment`, `cart`, and `gateway` on `start` and `reset`. Flagged for human review (rule 10).

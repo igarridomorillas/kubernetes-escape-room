@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-config
+  namespace: escape-level-04
+  labels:
+    app: payment
+    component: backend
+    level: "04"
+data:
+  PAYMENT_CURRENCY: "USD"
+  CARD_PROCESSOR_URL: "http://card-gateway.fake-internal:8443/v2/charge"
+  COUPON_VALIDATOR_URL: "http://coupon-ledger.fake-internal:8080/v1/redeem"

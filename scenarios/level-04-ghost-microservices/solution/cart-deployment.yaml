@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: escape-level-04
+  labels:
+    app: cart
+    component: backend
+    level: "04"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: cart
+        component: backend
+        level: "04"
+    spec:
+      containers:
+        - name: cart
+          image: escape-room/level-04-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVICE_ROLE
+              value: "cart"
+            - name: PAYMENT_SERVICE_URL
+              value: "http://payment.escape-level-04.svc.cluster.local:8080/payment/process"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi

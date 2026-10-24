@@ -82,6 +82,7 @@ The SRE Copilot Prompt Pattern is **Context + Symptom + kubectl output + Goal** 
 | `ImagePullBackOff` | `describe pod` Events (full) | AI invents a "valid" tag it never checked, or blames credentials without evidence |
 | `CrashLoopBackOff`, `OOMKilled`, exit code 137 | `logs` **and** `logs --previous` **and** `describe` (Last State, Limits) **and** the ConfigMap | Logs alone show only the first failure; the kernel kill shows up in `describe` |
 | Pods `Running 1/1` but traffic fails | `get endpoints`, Service YAML, NetworkPolicy YAML, `get pods --show-labels` | Pod health says nothing about routing or policy; AI blames DNS or the app |
+| Intermittent `HTTP 500` across a multi-tier call chain | Upstream `ERROR` lines per tier, `grep -A 5 -E "ERROR\|Exception"` from the origin tier's logs, plus its Deployment/ConfigMap YAML | `--tail=30` on a noisy service shows only healthy `INFO` traffic; dumping 5,000 raw lines floods the context window |
 
 ---
 

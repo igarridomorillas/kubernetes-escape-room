@@ -169,6 +169,53 @@ NetworkPolicy YAML and `get pods --show-labels`.
 
 ---
 
+## Level 04 (Bonus): The Ghost in the Microservices (`escape-level-04`)
+
+**Lesson:** call-chain tracing and log haystack filtering. In a noisy microservice pipeline (`gateway` → `cart` → `payment`), `--tail=30` misses intermittent errors and dumping 5,000 raw log lines floods the context window. Trace the upstream `500` down the call chain and filter for the exception before prompting.
+
+**Observed in the cluster (broken state):**
+```text
+$ kubectl get pods -n escape-level-04
+cart-...      1/1  Running
+gateway-...   1/1  Running
+payment-...   1/1  Running
+
+$ kubectl logs -n escape-level-04 deployment/payment | wc -l
+5000
+
+$ kubectl logs -n escape-level-04 deployment/payment | grep -A 4 "ERROR" | head -n 5
+2026-10-24T11:14:08.312Z ERROR [payment-worker-2] PaymentProcessor — Unhandled exception processing checkout tx_id=tx-001250 payment_method=coupon amount_cents=2500
+java.lang.NullPointerException: Cannot invoke "CouponValidator.redeem(String, int)" because "this.couponValidator" is null (required env COUPON_VALIDATOR_URL is not set)
+	at com.escaperoom.payment.CouponPaymentHandler.redeem(CouponPaymentHandler.java:74)
+	at com.escaperoom.payment.PaymentProcessor.process(PaymentProcessor.java:112)
+	at com.escaperoom.payment.CheckoutHttpHandler.doPost(CheckoutHttpHandler.java:68)
+```
+
+### 🚫 Bad prompt (`--tail=30` on `payment` or only `gateway` logs)
+```text
+Users are getting intermittent 500 errors on checkout. Here are the last 30 lines of payment logs:
+<PASTE kubectl logs -n escape-level-04 deployment/payment --tail=30>
+Why is it failing?
+```
+**Observed AI behavior:** Because the last ~850 lines of `payment`'s 5,000-line startup log buffer are `INFO` lines (`status=200` for `credit_card`, `debit_card`, `/healthz`), the model sees zero errors in `payment` and guesses network flakiness, gateway timeouts, or database connection pool exhaustion.
+
+### ✅ Good prompt (filtered stack trace + `Deployment/payment` + `ConfigMap/payment-config`)
+```text
+Namespace escape-level-04 (gateway -> cart -> payment). All pods Running 1/1.
+Intermittent HTTP 500 on POST /checkout. Below are the upstream ERROR lines from gateway/cart,
+the grep-filtered exception from payment's 5,000-line log, and payment's Deployment + ConfigMap.
+1. Quote the exact exception line that explains which payment_method fails and why.
+2. Quote the exact field in Deployment/payment vs ConfigMap/payment-config that disagrees.
+3. Give the minimal fix that updates Deployment/payment and rolls out the pod.
+<PASTE filtered ERROR lines + Deployment/payment + ConfigMap/payment-config>
+```
+
+### Facilitator notes
+- **Expected findings:** (1) `gateway` logs an upstream `500` from `cart`, and `cart` logs an upstream `500` from `payment`; (2) inside `payment`'s 5,000 log lines, `payment_method=coupon` throws `java.lang.NullPointerException` because `COUPON_VALIDATOR_URL` is not set; (3) `ConfigMap/payment-config` defines key `COUPON_VALIDATOR_URL`, but `Deployment/payment` injects it into the container under the misnamed env var `COUPON_VALIDATOR_URI`.
+- **Discussion:** Why did `--tail=30` fail here? Why is `grep -A 5 -E "ERROR|Exception"` better than pasting 5,000 lines into a chat window?
+
+---
+
 ## Challenge the AI's hypothesis (required exercise, run on Level 03)
 
 **Goal:** practice stage 3 and 4: test a confident hypothesis with a read-only check, then correct the AI with new evidence.

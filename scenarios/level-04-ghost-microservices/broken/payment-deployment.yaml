@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  namespace: escape-level-04
+  labels:
+    app: payment
+    component: backend
+    level: "04"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: payment
+        component: backend
+        level: "04"
+    spec:
+      containers:
+        - name: payment
+          image: escape-room/level-04-app:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVICE_ROLE
+              value: "payment"
+            - name: PAYMENT_CURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: PAYMENT_CURRENCY
+            - name: CARD_PROCESSOR_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: CARD_PROCESSOR_URL
+            - name: COUPON_VALIDATOR_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: COUPON_VALIDATOR_URL
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi

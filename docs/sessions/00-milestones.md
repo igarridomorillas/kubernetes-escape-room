@@ -8,9 +8,10 @@
 
 ```
 M1: Core Harness & Cluster Setup
-  └── M2: Level 01 — The Ghost Image ──┐
-  └── M3: Level 02 — The Crashing Config ──┼──► M5: AI Troubleshooting Best Practices
-  └── M4: Level 03 — The Silent Wall ──┘            └── M6: Workshop Docs & Pre-Event Readiness
+  └── M2: Level 01 — The Ghost Image ──────────┐
+  └── M3: Level 02 — The Crashing Config ──────┼──► M5: AI Troubleshooting Best Practices
+  └── M4: Level 03 — The Silent Wall ──────────┤          └── M6: Workshop Docs & Pre-Event Readiness
+  └── Bonus: Level 04 — Ghost Microservices ───┘
 ```
 
 ---
@@ -152,6 +153,39 @@ scenarios/level-03-silent-wall/
 - [ ] `kubectl get netpol -n escape-level-03 -o yaml` reveals label mismatch in broken state
 - [ ] Both bugs must be fixed for `verify.sh` to pass
 - [ ] `verify.sh` tests the full end-to-end path (not just individual services)
+
+---
+
+## Bonus — Level 04: "The Ghost in the Microservices"
+
+**Status:** 🔍 In review  
+**Namespace:** `escape-level-04`  
+**Duration target:** 15–20 min (optional bonus)
+
+**Bug:** 3-tier checkout pipeline (`gateway` → `cart` → `payment`) where `Deployment/payment` injects `COUPON_VALIDATOR_URI` instead of `COUPON_VALIDATOR_URL` from `ConfigMap/payment-config`, causing `payment` to throw an unhandled `NullPointerException` on `"coupon"` transactions buried inside 5,000 lines of standard `INFO` log traffic.  
+**Symptom:** All pods `Running 1/1` (`/healthz` passing) and standard card payments return `HTTP 200`, but `"coupon"` checkouts return `HTTP 500` cascading back through `cart` and `gateway`.
+
+**Deliverables:**
+```
+scenarios/level-04-ghost-microservices/
+├── app/             # Self-contained 3-tier Python/Alpine app (gateway, cart, payment)
+├── broken/          # 3-tier manifests with COUPON_VALIDATOR_URI env mismatch on payment
+├── solution/        # Aligned COUPON_VALIDATOR_URL env mapping on payment Deployment
+├── incident.md
+├── hints.md
+├── ai-assist.md
+└── verify.sh        # Sends 10 diverse synthetic checkout payloads through gateway (all HTTP 200)
+```
+
+**Verification contract:**
+1. All three Deployments (`gateway`, `cart`, `payment`) in `escape-level-04` rolled out and Ready
+2. Detached probe pod sends 10 diverse synthetic `POST /checkout` transactions through `gateway` (including `credit_card`, `debit_card`, `apple_pay`, `paypal`, `wallet`, `bank_transfer`, and `coupon`); all 10 return `HTTP 200` with `"payment":"approved"`
+
+**Review checklist (human must approve):**
+- [ ] App is self-contained (built and loaded into kind by `start level-04` without external registry)
+- [ ] `payment` emits 5,000 log lines with the `"coupon"` `NullPointerException` buried inside standard log traffic
+- [ ] Standard healthchecks and non-coupon transactions pass in the broken state while `"coupon"` returns `HTTP 500`
+- [ ] `verify.sh` fails in the broken state, passes after `solve`, and fails again after `reset`
 
 ---
 
