@@ -5,3 +5,9 @@ kubeconfig
 kind/.kube/
 mcp-config.toml
 opencode.json
+node_modules/
+docs/presentation/dist/
+docs/presentation/.slidev/
+docs/presentation/slides-export.pdf
+.agents/skills/
+docs/presentation/package-lock.json

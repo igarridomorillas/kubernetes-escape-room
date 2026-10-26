@@ -6,7 +6,7 @@
 
 ## Project Context
 
-This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40–50 min) for Platform/SRE/Software engineers. Attendees debug intentionally broken Kubernetes scenarios with the help of AI copilots, CLI agents, and agentic harnesses.
+This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (~55 min: 10 min talk, three levels, debrief) for Platform/SRE/Software engineers. Attendees debug intentionally broken Kubernetes scenarios with the help of AI copilots, CLI agents, and agentic harnesses.
 
 **Key files:**
 - [`docs/design/plan.md`](docs/design/plan.md) — Full architecture & implementation plan (source of truth)
@@ -54,6 +54,14 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (40�
 kubernetes-escape-room/
 ├── AGENTS.md                        # ← You are here
 ├── README.md
+├── Makefile                         # Task runner for slides, linting, validation & smoke tests
+├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── skills-lock.json                 # Agent skills lockfile
+├── .agents/
+│   ├── skills/
+│   │   └── slidev/                  # Slidev skill (gitignored; restore: npx skills experimental_install)
+│   └── plugins/
+│       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
 │   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
 ├── .room-state                      # Runtime state (gitignored)
@@ -96,6 +104,12 @@ kubernetes-escape-room/
 └── docs/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
+    ├── presentation/
+    │   ├── README.md                # Contributor guide for Slidev & MCP setup
+    │   ├── package.json             # Slidev dependencies & scripts
+    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── style.css                # Deck theme (colors, cards, chips)
+    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
@@ -103,11 +117,12 @@ kubernetes-escape-room/
     │   ├── 03-milestone-03.md       # Session 3 log: Level 02 — The Crashing Config
     │   ├── 04-milestone-04.md       # Session 4 log: Level 03 — The Silent Wall
     │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
-    │   └── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
-    ├── ai-prompts-cheatsheet.md     # AI workflow, bad vs good tips, guardrails (M5; M6 condenses)
+    │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
+    │   └── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
+    ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
-    └── pre-workshop-checklist.md    # M6 (coming soon)
+    └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 
 ---
@@ -121,6 +136,9 @@ kubernetes-escape-room/
 docker --version       # Docker Desktop
 kind --version         # >= 0.20.0
 kubectl version        # >= 1.28
+
+# Optional contributor/instructor setup (installs shellcheck, Slidev, Playwright Chromium & restores the pinned agent skills)
+make setup-dev
 ```
 
 ### Cluster lifecycle
@@ -130,59 +148,70 @@ kubectl version        # >= 1.28
 # Checks for docker, kind and kubectl (and that Docker is running); if any
 # requirement is missing it prints an install link/hint and exits 1.
 # Then installs the pinned Cilium CNI (kind/cni/cilium.yaml) and waits for Ready nodes.
-./scripts/escape-room.sh setup
+./scripts/escape-room.sh setup      # or: make setup
 
 # Tear down the cluster
-./scripts/escape-room.sh cleanup
+./scripts/escape-room.sh cleanup    # or: make cleanup
 ```
 
 ### Running a level end-to-end
 
 ```bash
 # Load and break a specific level
-./scripts/escape-room.sh start level-01     # or level-02, level-03, level-04
+./scripts/escape-room.sh start level-01     # or: make start LEVEL=level-01 (level-02, level-03, level-04)
 
 # Check current status
-./scripts/escape-room.sh status
+./scripts/escape-room.sh status             # or: make status
 
 # Get the next hint
-./scripts/escape-room.sh hint
+./scripts/escape-room.sh hint               # or: make hint
 
 # Show the AI copilot tip for the current level (does not use a hint)
-./scripts/escape-room.sh ai-assist
+./scripts/escape-room.sh ai-assist          # or: make ai-assist
 
 # Verify the scenario is fixed
 # (on success, prints next steps: start the next level, reset, or cleanup)
-./scripts/escape-room.sh verify
+./scripts/escape-room.sh verify             # or: make verify
 
 # Apply the reference solution (instructor use only)
-./scripts/escape-room.sh solve
+./scripts/escape-room.sh solve              # or: make solve
 
 # Re-inject broken state without restarting cluster
 # (also removes the level from COMPLETED_LEVELS; `start` does the same)
-./scripts/escape-room.sh reset
+./scripts/escape-room.sh reset              # or: make reset
 
 # Cleanup
-./scripts/escape-room.sh cleanup
+./scripts/escape-room.sh cleanup            # or: make cleanup
+```
+
+### Presentation (`Slidev`)
+
+```bash
+# Start the live-reloading Slidev server (http://localhost:3030)
+make slides
+
+# Build and export the presentation to PDF (docs/presentation/slides-export.pdf)
+make slides-export
 ```
 
 ### Linting & shell script validation
 
 ```bash
-# Lint the main harness
-shellcheck scripts/escape-room.sh
+# Run all static validations (shellcheck + 750 permissions + no user home paths)
+make validate
 
-# Lint all verify scripts
-shellcheck scenarios/*/verify.sh
-
-# Lint all scenario-level scripts (if any)
-find scenarios/ -name "*.sh" -exec shellcheck {} \;
+# Individual validation targets
+make lint          # shellcheck scripts/escape-room.sh scenarios/*/verify.sh
+make check         # enforce chmod 750 (git only tracks 755, so it re-applies 750) and no hardcoded /Users/ or /home/ paths
 ```
 
 ### Smoke-testing a scenario
 
 ```bash
-# Full scenario smoke test (broken → verify fails → solve → verify passes)
+# Automated smoke test via Makefile (single level or all levels)
+make test LEVEL=level-01          # or: make test LEVEL=all
+
+# Manual scenario smoke test (broken → verify fails → solve → verify passes)
 ./scripts/escape-room.sh start level-01
 ./scripts/escape-room.sh verify           # Expected: exits 1 (still broken)
 ./scripts/escape-room.sh solve
@@ -303,6 +332,13 @@ exit 0
 - `ai-assist` prints `scenarios/<level>-*/ai-assist.md` for the current level (`cat`, no parsing). It is independent of `HINT_LEVEL` and never changes `.room-state`. `ai-assist.md` follows the hint discipline: no fix, no root cause, no correct values. It is a separate file from `hints.md` on purpose, since `extract_hint` prints everything under a hint heading. `start` lists the command in its "Useful commands".
 - Levels are switched with `start <level>` only; there is intentionally no `next` command.
 
+### Presentation & `Makefile` rules (learned from M6)
+
+- **Subdirectory isolation (`docs/presentation/`):** Keep Slidev's `package.json` and `slides.md` (the generated `package-lock.json` is gitignored) inside `docs/presentation/` so the repository root remains free of Node.js runtime dependencies for attendees running `./scripts/escape-room.sh`.
+- **`npx` MCP binary resolution (`--prefix docs/presentation`):** On npm, the Slidev CLI package is `@slidev/cli` (which installs the local `slidev` binary into `docs/presentation/node_modules/.bin/slidev`); there is no standalone `slidev` package on the npm registry. Consequently, any MCP configuration or command executed from the repository root **must** pass `--prefix docs/presentation` (`npx --prefix docs/presentation slidev mcp docs/presentation/slides.md`).
+- **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing and builds the deck (`slidev build`) before exporting.
+- **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets.
+
 ---
 
 ## Agent Behaviour Guidelines
@@ -379,4 +415,10 @@ kubeconfig
 kind/.kube/
 mcp-config.toml
 opencode.json
+node_modules/
+docs/presentation/dist/
+docs/presentation/.slidev/
+docs/presentation/slides-export.pdf
+docs/presentation/package-lock.json
+.agents/skills/
 ```

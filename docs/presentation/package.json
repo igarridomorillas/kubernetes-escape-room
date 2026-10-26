@@ -1,0 +1,17 @@
+{
+  "name": "kubernetes-escape-room-slides",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "slidev slides.md",
+    "build": "slidev build slides.md",
+    "export": "slidev export slides.md",
+    "mcp": "slidev mcp slides.md"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.14.1",
+    "@slidev/theme-default": "^0.25.0",
+    "playwright-chromium": "^1.51.0",
+    "vue": "^3.5.13"
+  }
+}

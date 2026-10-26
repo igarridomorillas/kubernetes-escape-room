@@ -1,7 +1,7 @@
 # Kubernetes Escape Room: Architecture & Implementation Playbook
 ## Ready for CLI Agent Execution
 
-**Audience:** Platform, SRE, and Software Engineers (40–50 min hands-on collaborative session)
+**Audience:** Platform, SRE, and Software Engineers (~55 min session: 10 min talk, 35–45 min hands-on, 5 min debrief)
 
 ---
 
@@ -187,7 +187,7 @@ COMPLETED_LEVELS=
 | :--- | :--- | :--- |
 | **Model Hosting** | Web Copilots, CLI Agents & Agentic Harnesses (Gemini, ChatGPT, Claude, OpenCode, MCP) | Avoids laptop VRAM/RAM constraints and eliminates local model setup friction for 40 attendees. |
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Guaranteed to run out of the box on macOS and Linux without installing Python packages or `jq`. |
-| **Scenario Sizing** | 3 Core Scenarios + 1 Bonus | Perfectly tuned for 40–50 minutes of collaborative pairing. |
+| **Scenario Sizing** | 3 Core Scenarios + 1 Bonus | Tuned for ~55 minutes in total (10 min talk + 35–45 min of collaborative pairing + 5 min debrief); Level 04 is a take-home. |
 | **Verification Method** | Non-destructive in-cluster synthetic probes | Idempotent, testable, and gives immediate binary feedback (Escaped / Still Trapped). |
 
 ---
@@ -249,3 +249,11 @@ COMPLETED_LEVELS=
 - **Single self-contained image:** `scenarios/level-04-ghost-microservices/app/` builds `escape-room/level-04-app:1.0.0` (`python:3.12-alpine3.20`, stdlib only) and runs as `gateway`, `cart`, or `payment` via the `SERVICE_ROLE` environment variable.
 - **5,000-line log haystack & configuration bug:** On startup, `payment` emits 5,000 lines of structured checkout logs. In `broken/payment-deployment.yaml`, the container environment variable is mapped as `COUPON_VALIDATOR_URI` instead of `COUPON_VALIDATOR_URL` (referencing `ConfigMap/payment-config` key `COUPON_VALIDATOR_URL`). Health checks (`/healthz`) and non-coupon payments succeed, while `"coupon"` checkouts log an unhandled `NullPointerException` stack trace (buried inside the 5,000 lines and emitted on live `"coupon"` requests) and return `HTTP 500` cascading through `cart` and `gateway`.
 - **Immediate rollout on fix:** Placing the env name mismatch on `Deployment/payment` ensures that fixing the Deployment (or running `./scripts/escape-room.sh solve`) immediately triggers a Pod rollout without needing a manual `kubectl rollout restart`. `wait_for_level_rollout` in `scripts/escape-room.sh` waits for `payment`, `cart`, and `gateway` on `start` and `reset`.
+
+### Amendment 7 — Slidev Workshop Presentation, MCP Integration & Makefile (M6)
+
+*Flagged for human review (rule 10).*
+
+- **Presentation deck in `docs/presentation/`:** Milestone 6 includes a self-contained [Slidev](https://sli.dev) deck (`docs/presentation/slides.md` and `docs/presentation/package.json`) covering the ~55 minute workshop (incident-management context, troubleshooting then vs now, AI best practices: 5-stage loop, 6 guardrails, tooling tiers with `k8sgpt` and MCP, sharing skills/MCP via the repo; Levels 01–03 briefings & debriefs, the Level 03 Challenge-the-AI-Hypothesis exercise, and the 4-criterion facilitator rubric; Level 04 is left as a take-home) with a shared `style.css` theme and slide numbers via `global-bottom.vue`; the generated `package-lock.json` is gitignored. Keeping `package.json` under `docs/presentation/` preserves the zero-dependency root layout for `./scripts/escape-room.sh`.
+- **Agent skill & Slidev MCP server:** Pinned the official `slidevjs/slidev` agent skill in `skills-lock.json` (files under `.agents/skills/` are gitignored and restored by `make setup-dev` or `npx skills experimental_install`) and configured the Slidev stdio MCP server (`npx --prefix docs/presentation slidev mcp docs/presentation/slides.md`) in `.agents/plugins/slidev/mcp_config.json` (Antigravity workspace plugin) and `.mcp.json` (standard CLI/IDE MCP clients), documented for contributors in `docs/presentation/README.md`. `--prefix docs/presentation` is required when invoking `npx` from the repository root because the `slidev` binary is provided by `@slidev/cli` inside `docs/presentation/node_modules/.bin/`.
+- **PDF export (`playwright-chromium`) & root `Makefile`:** Added `playwright-chromium` to `docs/presentation/package.json` and created a root `Makefile` providing `setup-dev` (installs `shellcheck`, Slidev dependencies, Playwright Chromium, and restores the pinned agent skills), `slides` (starts the live server), `slides-export` (builds and exports to PDF), `lint`, `check`, `validate`, cluster lifecycle wrappers (`setup`, `cleanup`, `start`, `status`, `hint`, `ai-assist`, `verify`, `solve`, `reset`), and parameterized end-to-end smoke testing (`make test LEVEL=level-01` or `make test LEVEL=all`).

@@ -17,17 +17,28 @@ Each level presents a realistic incident alert. Pods are broken, traffic is down
 | 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch | ✅ Available |
 | 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | ✅ Available |
 
-All levels run locally via a single CLI tool:
+All levels run locally via a single CLI tool (or via `make` shortcuts):
 
 ```bash
-./scripts/escape-room.sh setup          # spin up a Kind cluster
-./scripts/escape-room.sh start level-01 # inject the broken scenario (or level-02, level-03, level-04)
-./scripts/escape-room.sh hint           # get a progressive hint
-./scripts/escape-room.sh ai-assist      # tip for using an AI copilot on this level
-./scripts/escape-room.sh verify         # check if you've escaped
-./scripts/escape-room.sh solve          # reveal the solution (instructor only)
-./scripts/escape-room.sh reset          # re-break the current level and retry
-./scripts/escape-room.sh cleanup        # tear down the Kind cluster
+./scripts/escape-room.sh setup          # spin up a Kind cluster (or: make setup)
+./scripts/escape-room.sh start level-01 # inject the broken scenario (or: make start LEVEL=level-01)
+./scripts/escape-room.sh status         # check active level & pod statuses (or: make status)
+./scripts/escape-room.sh hint           # get a progressive hint (or: make hint)
+./scripts/escape-room.sh ai-assist      # tip for using an AI copilot on this level (or: make ai-assist)
+./scripts/escape-room.sh verify         # check if you've escaped (or: make verify)
+./scripts/escape-room.sh solve          # reveal the solution, instructor only (or: make solve)
+./scripts/escape-room.sh reset          # re-break the current level and retry (or: make reset)
+./scripts/escape-room.sh cleanup        # tear down the Kind cluster (or: make cleanup)
+```
+
+For instructors and contributors, `Makefile` also provides presentation and validation workflows:
+
+```bash
+make setup-dev          # install contributor deps (shellcheck, Slidev, Playwright Chromium, agent skills)
+make slides             # launch the live Slidev presentation (http://localhost:3030)
+make slides-export      # build and export the presentation deck to PDF
+make validate           # run shellcheck + permission (750) + relative-path checks
+make test LEVEL=all     # run end-to-end smoke tests across all 4 levels (or LEVEL=level-01)
 ```
 
 `start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Levels 02 and 04 ship small apps that `start` builds and loads into the cluster for you (no registry needed).
@@ -40,6 +51,14 @@ All levels run locally via a single CLI tool:
 kubernetes-escape-room/
 ├── AGENTS.md                        # Agent & contributor conventions
 ├── README.md                        # Project overview & quickstart
+├── Makefile                         # Task runner for slides, linting, validation & smoke tests
+├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── skills-lock.json                 # Agent skills lockfile
+├── .agents/
+│   ├── skills/
+│   │   └── slidev/                  # Slidev skill (gitignored; restore: npx skills experimental_install)
+│   └── plugins/
+│       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
 │   └── escape-room.sh               # Main CLI harness (pure Bash, zero deps)
 ├── kind/
@@ -55,6 +74,12 @@ kubernetes-escape-room/
 └── docs/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
+    ├── presentation/
+    │   ├── README.md                # Slidev + MCP contributor guide
+    │   ├── package.json             # Slidev dependencies & scripts
+    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── style.css                # Deck theme (colors, cards, chips)
+    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1: Core harness & cluster setup
@@ -62,11 +87,12 @@ kubernetes-escape-room/
     │   ├── 03-milestone-03.md       # Session 3: Level 02 — The Crashing Config
     │   ├── 04-milestone-04.md       # Session 4: Level 03 — The Silent Wall
     │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
-    │   └── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
-    ├── ai-prompts-cheatsheet.md     # AI workflow, bad vs good tips & guardrails (M5; M6 condenses to one page)
+    │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
+    │   └── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
+    ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
-    └── pre-workshop-checklist.md    # Instructor & attendee checklist (M6, coming soon)
+    └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 
 ---
@@ -85,4 +111,4 @@ kubectl version    # >= 1.28
 
 ## Status
 
-> 🚧 **Implementation in progress.** Levels 01–04 (including the bonus Level 04) and M5 (AI-assisted troubleshooting best practices, incl. optional MCP and CLI agents) are implemented. Next: M6 (workshop docs & one-page cheatsheet). See [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for the current milestone status and review gates.
+> ✅ **All milestones implemented (M1–M6 + Bonus Level 04).** See [`docs/pre-workshop-checklist.md`](docs/pre-workshop-checklist.md) for pre-event setup, [`docs/presentation/README.md`](docs/presentation/README.md) to run the Slidev deck, and [`docs/sessions/00-milestones.md`](docs/sessions/00-milestones.md) for milestone status and review gates.

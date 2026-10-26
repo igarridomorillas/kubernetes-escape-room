@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "slidev": {
+      "command": "npx",
+      "args": [
+        "--prefix",
+        "docs/presentation",
+        "slidev",
+        "mcp",
+        "docs/presentation/slides.md"
+      ]
+    }
+  }
+}

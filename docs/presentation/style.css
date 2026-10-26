@@ -1,0 +1,200 @@
+:root {
+  --er-accent: #38bdf8;
+  --er-accent-2: #a78bfa;
+  --er-good: #34d399;
+  --er-bad: #f87171;
+  --er-warn: #fbbf24;
+  --er-card: rgba(148, 163, 184, 0.08);
+  --er-border: rgba(148, 163, 184, 0.22);
+  --er-text: #e2e8f0;
+  --er-muted: #94a3b8;
+  --slidev-theme-primary: var(--er-accent);
+  --slidev-code-font-size: 0.95rem;
+  --slidev-code-line-height: 1.5;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+.slidev-layout {
+  background:
+    radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.10), transparent 60%),
+    radial-gradient(700px 500px at 0% 100%, rgba(167, 139, 250, 0.10), transparent 60%),
+    #0b1020;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.12rem;
+  color: var(--er-text);
+}
+
+.slidev-layout.default,
+.slidev-layout.center {
+  display: flex;
+  flex-direction: column;
+}
+
+.slidev-layout h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--er-accent);
+  margin-bottom: 0.5em;
+}
+
+.slidev-layout h3 { color: var(--er-accent); font-weight: 700; margin-bottom: 0.4em; }
+.slidev-layout code, .slidev-layout pre { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+.slidev-layout pre { border: 1px solid var(--er-border); border-radius: 10px; margin: 0; }
+.slidev-layout table { font-size: 0.98rem; }
+.slidev-layout table th { color: var(--er-accent); }
+.slidev-layout li { line-height: 1.55; }
+
+.slidev-layout.cover,
+.slidev-layout.end {
+  background:
+    radial-gradient(800px 500px at 80% 20%, rgba(167, 139, 250, 0.25), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(56, 189, 248, 0.22), transparent 60%),
+    #0b1020;
+}
+
+.slidev-layout.end { letter-spacing: normal; text-align: center; }
+.slidev-layout.end .quote { border-left: 0; padding-left: 0; }
+
+/* Content area: fills the space under the title and centers its content */
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.1rem;
+  padding-bottom: 2.2rem;
+}
+
+.sub { color: var(--er-muted); margin: -0.2rem 0 0.6rem; font-size: 1.05rem; }
+.sub code { font-size: 0.95em; }
+
+/* ── Building blocks ──────────────────────────────────────────────────── */
+.kicker {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--er-accent);
+  border: 1px solid var(--er-border);
+  border-radius: 999px;
+  padding: 0.2em 0.9em;
+  margin-bottom: 0.9rem;
+  align-self: flex-start;
+}
+
+.card {
+  background: var(--er-card);
+  border: 1px solid var(--er-border);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+}
+
+.card.good { border-color: rgba(52, 211, 153, 0.5); }
+.card.bad { border-color: rgba(248, 113, 113, 0.5); }
+.card.warn { border-color: rgba(251, 191, 36, 0.5); }
+
+.card h4 { margin: 0 0 0.4rem; font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.45rem; }
+.card.good h4 { color: var(--er-good); }
+.card.bad h4 { color: var(--er-bad); }
+.card.warn h4 { color: var(--er-warn); }
+.card p, .card ul, .card ol { margin: 0; }
+.card ul, .card ol { padding-left: 1.2rem; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: stretch; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; align-items: stretch; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: stretch; }
+.col { display: flex; flex-direction: column; gap: 1rem; }
+.col > .grow { flex: 1; }
+.grid-2 > .card, .grid-3 > .card, .grid-4 > .card { box-sizing: border-box; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 6px;
+  padding: 0.12em 0.6em;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--er-accent);
+}
+.chip.red { background: rgba(248, 113, 113, 0.15); color: var(--er-bad); }
+.chip.green { background: rgba(52, 211, 153, 0.15); color: var(--er-good); }
+.chip.amber { background: rgba(251, 191, 36, 0.15); color: var(--er-warn); }
+.chip.violet { background: rgba(167, 139, 250, 0.18); color: var(--er-accent-2); }
+
+.quote {
+  border-left: 3px solid var(--er-accent-2);
+  padding: 0.2rem 0 0.2rem 1rem;
+  font-style: italic;
+  opacity: 0.92;
+  margin-top: 0.4rem;
+}
+
+.small { font-size: 0.95rem; }
+.tiny { font-size: 0.8rem; opacity: 0.7; }
+
+/* Step flow (replaces Mermaid) */
+.steps { display: flex; align-items: stretch; }
+.step {
+  flex: 1;
+  position: relative;
+  background: var(--er-card);
+  border: 1px solid var(--er-border);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  text-align: center;
+}
+.step b { display: block; color: var(--er-accent); font-size: 1.05rem; }
+.step span { font-size: 0.88rem; color: var(--er-muted); }
+.step:not(:last-child) { margin-right: 1.3rem; }
+.step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--er-accent-2);
+  font-weight: 700;
+}
+.step.on { border-color: var(--er-accent); background: rgba(56, 189, 248, 0.12); }
+
+/* Pager alert card */
+.pager {
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.10), rgba(248, 113, 113, 0.03));
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+}
+.pager-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 700; margin-bottom: 0.6rem; }
+.pager-head .id { color: var(--er-bad); }
+.pager ul { margin: 0; padding-left: 1.2rem; }
+
+.tip {
+  border-left: 3px solid var(--er-good);
+  background: rgba(52, 211, 153, 0.07);
+  border-radius: 0 10px 10px 0;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.98rem;
+}
+
+.slide-number {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--er-text);
+  opacity: 0.7;
+  z-index: 10;
+  font-variant-numeric: tabular-nums;
+}
+
+.slidev-layout table th, .slidev-layout table td { padding: 0.45rem 0.8rem; }
+.pager code { white-space: nowrap; }
+
+.slidev-layout.end { padding: 3rem 3.5rem; }
+.slidev-layout.end * { letter-spacing: normal; }
+.slidev-layout.end pre { text-align: left; }
+

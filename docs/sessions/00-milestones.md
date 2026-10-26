@@ -236,14 +236,26 @@ scenarios/*/ai-assist.md        # Attendee AI tip per level, shown by `./scripts
 
 ## Milestone 6 — Workshop Docs & Pre-Event Readiness
 
-**Status:** ⬜ Not started  
+**Status:** 🔍 In review (human sign-off pending)  
 **Depends on:** M5 complete
 
 **Deliverables:**
 ```
+Makefile                            # Task runner (setup-dev, slides, slides-export, lint, check, validate, test)
+.mcp.json                           # Root Slidev MCP server config
+skills-lock.json                    # Agent skills lockfile
+.agents/
+├── skills/slidev/                  # Slidev skill (gitignored; restored from skills-lock.json)
+└── plugins/slidev/                 # Antigravity workspace plugin (plugin.json + mcp_config.json)
 docs/
-├── ai-prompts-cheatsheet.md    # One-page A4 condensed version of the M5 content
-└── pre-workshop-checklist.md   # Instructor setup & attendee prereqs
+├── ai-prompts-cheatsheet.md        # One-page A4 condensed version of the M5 content
+├── pre-workshop-checklist.md       # Instructor setup, attendee prereqs & fallback playbooks
+└── presentation/
+    ├── README.md                   # Contributor guide for Slidev & MCP server setup
+    ├── package.json                # Slidev + playwright-chromium dependencies & scripts
+    ├── style.css                   # Deck theme (colors, cards, chips)
+    ├── global-bottom.vue           # Slide numbers (<n>/<total>)
+    └── slides.md                   # Full 24-slide workshop deck (Levels 01–03; Level 04 is a take-home)
 ```
 
 **`pre-workshop-checklist.md` must cover:**
@@ -271,7 +283,7 @@ docs/
 |---|---|---|
 | **Model Hosting** | Web Copilots, CLI Agents & Agentic Harnesses (Gemini, ChatGPT, Claude, OpenCode, MCP) | No local model VRAM/RAM constraints; flexible setup for 40 attendees |
 | **Harness Tech** | Pure POSIX Bash (`scripts/escape-room.sh`) | Runs out-of-the-box on macOS and Linux; no Python/jq |
-| **Scenario Sizing** | 3 Core + 1 Bonus | Tuned for 40–50 min collaborative pairing |
+| **Scenario Sizing** | 3 Core + 1 Bonus | Tuned for 35–45 min collaborative pairing inside a ~55 min session (10 min talk + 5 min debrief) |
 | **Verification** | In-cluster synthetic probes | Idempotent, binary feedback (Escaped / Still Trapped) |
-| **AI Tooling Tiers** | Web copilot baseline; MCP and CLI agents (e.g. opencode) optional, read-only by default | Keeps zero-setup path for all attendees while teaching tool-connected workflows safely |
+| **AI Tooling Tiers** | Web copilot baseline; `k8sgpt`, MCP and CLI agents (e.g. opencode) optional, read-only by default | Keeps zero-setup path for all attendees while teaching tool-connected workflows safely |
 | **Milestone Split** | M5 = AI best practices, M6 = docs & readiness | Research-heavy AI content needs its own review gate before final docs are condensed |
