@@ -148,40 +148,43 @@ make setup-dev
 # Checks for docker, kind and kubectl (and that Docker is running); if any
 # requirement is missing it prints an install link/hint and exits 1.
 # Then installs the pinned Cilium CNI (kind/cni/cilium.yaml) and waits for Ready nodes.
-./scripts/escape-room.sh setup      # or: make setup
+make setup
 
 # Tear down the cluster
-./scripts/escape-room.sh cleanup    # or: make cleanup
+make cleanup
 ```
 
 ### Running a level end-to-end
 
 ```bash
+# Setup + pull every scenario image + build app images
+make prepare
+
 # Load and break a specific level
-./scripts/escape-room.sh start level-01     # or: make start LEVEL=level-01 (level-02, level-03, level-04)
+make start LEVEL=level-01     # level-02, level-03, level-04
 
 # Check current status
-./scripts/escape-room.sh status             # or: make status
+make status
 
 # Get the next hint
-./scripts/escape-room.sh hint               # or: make hint
+make hint
 
 # Show the AI copilot tip for the current level (does not use a hint)
-./scripts/escape-room.sh ai-assist          # or: make ai-assist
+make ai-assist
 
 # Verify the scenario is fixed
 # (on success, prints next steps: start the next level, reset, or cleanup)
-./scripts/escape-room.sh verify             # or: make verify
+make verify
 
 # Apply the reference solution (instructor use only)
-./scripts/escape-room.sh solve              # or: make solve
+make solve
 
 # Re-inject broken state without restarting cluster
 # (also removes the level from COMPLETED_LEVELS; `start` does the same)
-./scripts/escape-room.sh reset              # or: make reset
+make reset
 
 # Cleanup
-./scripts/escape-room.sh cleanup            # or: make cleanup
+make cleanup
 ```
 
 ### Presentation (`Slidev`)
@@ -212,12 +215,12 @@ make check         # enforce chmod 750 (git only tracks 755, so it re-applies 75
 make test LEVEL=level-01          # or: make test LEVEL=all
 
 # Manual scenario smoke test (broken → verify fails → solve → verify passes)
-./scripts/escape-room.sh start level-01
-./scripts/escape-room.sh verify           # Expected: exits 1 (still broken)
-./scripts/escape-room.sh solve
-./scripts/escape-room.sh verify           # Expected: exits 0 (escaped)
-./scripts/escape-room.sh reset
-./scripts/escape-room.sh verify           # Expected: exits 1 (re-broken)
+make start LEVEL=level-01
+make verify    # Expected: exits 1 (still broken)
+make solve
+make verify    # Expected: exits 0 (escaped)
+make reset
+make verify    # Expected: exits 1 (re-broken)
 ```
 
 ---
@@ -317,11 +320,14 @@ exit 0
 - **Hints are progressive:** Hint 1 = concept, Hint 2 = investigation commands (`describe`, `logs`, `events`) **without** the fix, Hint 3 = AI prompt recipe. Never put the fix command or the correct value in Hints 1–2.
 - **`incident.md` describes symptoms only:** no root cause, no "last deploy" hints, and no endpoints/paths that the workload does not actually serve.
 - **Executable scripts** must be `chmod 750`; re-check after editing with tools that reset modes.
+- **Images must be discoverable (learned from `prepare`):** write every image as a literal `image: <ref>`, `--image=<ref>` or Dockerfile `FROM <ref>`, never built from shell/template variables, so `prepare` finds and pre-pulls it. Never list images by hand in scripts or docs; add them to the scenario and let `discover_images` pick them up.
+- **Pull, don't `kind load` third-party images (learned from `prepare`):** with Docker's containerd image store, `kind load docker-image` fails on multi-arch images (`ctr: content digest ... not found`). Only locally built `escape-room/*` images are loaded; everything else is pulled by the node (or pre-pulled on the host). Do not silence stderr when debugging such failures.
 
 ### Harness behaviour (`scripts/escape-room.sh`)
 
 - `setup` checks `docker`, `kind` and `kubectl`; for a missing `docker` or `kind` it prints an install link/hint and exits `1`. A stopped Docker daemon gets a "start Docker Desktop" hint.
 - `setup` creates the cluster with `networking.disableDefaultCNI: true` (`kind/cluster-config.yaml`), then applies the pinned Cilium 1.20.2 manifest `kind/cni/cilium.yaml` and waits for the Cilium DaemonSet, operator, Hubble Relay, Hubble UI and all nodes `Ready`. Cilium enforces NetworkPolicy; kindnet does not. Regenerate the manifest with `helm template cilium cilium/cilium --version 1.20.2 --namespace kube-system --include-crds --set ipam.mode=kubernetes --set kubeProxyReplacement=false --set operator.replicas=1 --set hubble.enabled=true --set hubble.relay.enabled=true --set hubble.ui.enabled=true --set envoy.enabled=false > kind/cni/cilium.yaml` when bumping the version.
+- `prepare` runs `setup`, then `pull_images` runs `docker pull` on the host for every image found by `discover_images` (never hardcoded: `image:`/`--image=` references in `scenarios/` manifests, `verify.sh` and docs, plus Dockerfile `FROM` lines; `escape-room/*` skipped; Cilium excluded because `setup` already pulls it). Images are only pulled, not loaded into the kind node. It then builds/loads every level's app image. Images whose tag does not exist are skipped silently and never listed (level 01's broken image would otherwise be a spoiler); any other pull failure is reported by name as a warning.
 - If a cluster exists that was created with kindnet, `setup` exits `1` and asks for `cleanup` followed by `setup`.
 - `setup` writes a repo-local kubeconfig `kind/.kube/config` (dir `700`, file `600`) with `kind export kubeconfig`, on every run, so it stays in sync with the cluster. kind still updates the default `~/.kube/config` and its current-context as usual. The harness exports `KUBECONFIG` to that file (via `require_cluster` and `setup`), so every `kubectl` call, including those in `verify.sh`, targets only the escape-room cluster and never the user's current context. Each `verify.sh` pins `KUBECONFIG` to the same file and exits `1` if it is missing. `cleanup` removes `kind/.kube/` and `.room-state` (also when the cluster is already gone); `require_cluster` tells the user to run `setup` if the file is missing.
 - `start <level>` and `reset` re-break the level **and** remove it from `COMPLETED_LEVELS` in `.room-state`, so `status` never shows a broken level as completed. Only `cleanup` deletes `.room-state`.
@@ -356,7 +362,7 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
 4. Implement **one milestone at a time** unless explicitly instructed otherwise.
 5. After every file created, run `shellcheck` on any `.sh` file. Fix all `SC*` warnings before proceeding.
 6. After applying broken manifests, validate the failure mode with `kubectl get pods -n <namespace>` before moving on.
-7. After applying solution manifests, run `./scripts/escape-room.sh verify` and confirm exit code `0`.
+7. After applying solution manifests, run `make verify` and confirm exit code `0`.
 
 ### When making changes
 

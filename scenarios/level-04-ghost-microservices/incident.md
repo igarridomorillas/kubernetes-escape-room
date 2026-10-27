@@ -25,4 +25,4 @@ The 3-tier checkout pipeline (`gateway` → `cart` → `payment`) is passing all
    ```
 2. Trace the failing checkout requests across the `gateway` → `cart` → `payment` tiers and locate the underlying error in the logs.
 3. Apply the corrective configuration change so all checkout payment methods succeed.
-4. Verify resolution using `./scripts/escape-room.sh verify`.
+4. Verify resolution using `make verify`.

@@ -26,4 +26,4 @@ All incoming checkout payment transactions are failing with `503 Service Unavail
    ```
 2. Diagnose why the workload is not becoming ready.
 3. Apply the corrective configuration change to restore endpoint availability.
-4. Verify resolution using `./scripts/escape-room.sh verify`.
+4. Verify resolution using `make verify`.

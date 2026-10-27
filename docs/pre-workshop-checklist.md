@@ -6,7 +6,7 @@
 
 ## 1. Attendee Prerequisites (Send 48 Hours Before Event)
 
-Ask attendees to install the three required tools and run `./scripts/escape-room.sh setup` **before arriving at the venue** so container images are already cached on their laptops.
+Ask attendees to install the three required tools and run `make prepare` **before arriving at the venue** so the cluster is created, the app images are built, and every scenario image is already downloaded on their laptops (this also confirms registry access and covers the download bandwidth).
 
 ### A. Required Tools (All Attendees)
 
@@ -23,23 +23,18 @@ Ask attendees to install the three required tools and run `./scripts/escape-room
 git clone https://github.com/unai-ttxu/kubernetes-escape-room.git
 cd kubernetes-escape-room
 
-# 2. Create the Kind cluster and install the pinned Cilium 1.20.2 CNI
-#    (First run pulls Cilium & Hubble images and takes ~2–4 minutes)
-./scripts/escape-room.sh setup
+# 2. One command: create the Kind cluster (pinned Cilium 1.20.2 CNI), pull every
+#    scenario, probe and base image, and build the Level 02 / 04 app images.
+#    Images are discovered from scenarios/, so nothing needs to be listed by hand.
+#    Scenario images are only pulled to the host cache, not loaded into the node.
+#    (First run takes several minutes, depending on bandwidth)
+make prepare
 
-# 3. Pre-pull scenario & verification probe images so workshop Wi-Fi is not needed
-docker pull nginx:1.27-alpine
-docker pull python:3.12-alpine3.20
-docker pull curlimages/curl:8.11.1
-kind load docker-image nginx:1.27-alpine curlimages/curl:8.11.1 --name escape-room
-
-# 4. Pre-build local app images for Level 02 and Bonus Level 04, then reset to Level 01
-./scripts/escape-room.sh start level-02
-./scripts/escape-room.sh start level-04
-./scripts/escape-room.sh start level-01
+# 3. Optional: confirm the first level starts cleanly
+make start LEVEL=level-01
 ```
 
-> **Note on `KUBECONFIG`:** `./scripts/escape-room.sh setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$PWD/kind/.kube/config"` so your manual `kubectl` commands always target the workshop cluster.
+> **Note on `KUBECONFIG`:** `make setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$PWD/kind/.kube/config"` so your manual `kubectl` commands always target the workshop cluster.
 
 ---
 
@@ -100,7 +95,7 @@ Register the server in your MCP client configuration:
 
 ### Optional Tier 4 Setup: CLI Agent (`opencode`)
 
-To restrict `opencode` to read-only cluster inspection (and prevent it from running `./scripts/escape-room.sh solve`), save `opencode.json` in the repository root (gitignored) and launch with `KUBECONFIG=kind/.kube/config opencode`:
+To restrict `opencode` to read-only cluster inspection (and prevent it from running `make solve`), save `opencode.json` in the repository root (gitignored) and launch with `KUBECONFIG=kind/.kube/config opencode`:
 
 ```json
 {
@@ -119,6 +114,7 @@ To restrict `opencode` to read-only cluster inspection (and prevent it from runn
       "kubectl edit *": "deny",
       "kubectl replace *": "deny",
       "kubectl exec *": "deny",
+      "make solve*": "deny",
       "./scripts/escape-room.sh solve*": "deny"
     }
   }
@@ -177,7 +173,7 @@ Run this deterministic smoke test from the repository root to verify the harness
 | `10:00–19:00` | **Level 01: The Ghost Image** | Attendees run `start level-01`. Compare vague prompt vs pasting `describe pod` Events (Slides 16–17) |
 | `19:00–33:00` | **Level 02: The Crashing Config** | Attendees run `start level-02`. Highlight compound faults: `KeyError` in logs + `OOMKilled` in `describe` (Slides 18–19) |
 | `33:00–50:00` | **Level 03: The Silent Wall** | Attendees run `start level-03`. Run the 5-min **Challenge the AI's Hypothesis** exercise (`504` vs `502`, ClusterIP vs Pod IP) (Slides 20–22) |
-| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `./scripts/escape-room.sh cleanup` (Slides 23–24) |
+| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `make cleanup` (Slides 23–24) |
 | *Flex* | **Per-level targets** | Design targets are 8–10, 12–15 and 15–20 min (Levels 01–03). Fast rooms move on early; if you run long, skip the Level 03 exercise discussion rather than the debrief |
 | *Take-home* | **Level 04: Ghost Microservices** | Not presented in the deck. Fast finishers or attendees run `start level-04` (`5,000`-line log haystack + `grep -A 5 -E "ERROR\|Exception"`) |
 
@@ -186,7 +182,7 @@ Run this deterministic smoke test from the repository root to verify the harness
 ## 5. Troubleshooting & Fallback Playbooks
 
 ### Fallback 1: Venue Wi-Fi is Slow or Blocked During Image Pulls
-- **Symptom:** `setup` or `verify` hangs pulling `quay.io/cilium/*`, `nginx:1.27-alpine`, or `curlimages/curl:8.11.1`.
+- **Symptom:** `setup`, `prepare` or `verify` hangs pulling `quay.io/cilium/*`, `nginx:1.27-alpine`, or `curlimages/curl:8.11.1`.
 - **Fix (Offline Image Bundle):** On a machine with cached images (such as the instructor laptop), export an image archive onto a USB drive or local LAN share:
   ```bash
   docker save -o escape-room-images.tar \
@@ -208,23 +204,23 @@ Run this deterministic smoke test from the repository root to verify the harness
 ### Fallback 2: Attendee Laptop Cannot Run Docker or Kind
 - **Symptom:** Docker Desktop will not start, insufficient RAM/disk, or restricted corporate laptop.
 - **Fix (Pair Programming Mode):** Pair the attendee with a neighbor using **Driver / AI Navigator** roles:
-  - **Driver** runs `./scripts/escape-room.sh` and `kubectl` on their cluster.
+  - **Driver** runs `make` targets and `kubectl` on their cluster.
   - **AI Navigator** crafts the prompts, challenges the AI's hypotheses, and checks every proposed command against the 6 guardrails before the Driver executes it.
 
 ### Fallback 3: Corporate VPN Overlaps with Kind Subnets (`10.10.0.0/16` or `10.11.0.0/16`)
 - **Symptom:** `kubectl` commands time out or Cilium pods fail to route when a corporate VPN is active.
 - **Fix:**
   1. Disconnect the corporate VPN during the local workshop (all levels run 100% locally inside Docker), **or**
-  2. Edit `podSubnet` and `serviceSubnet` in `kind/cluster-config.yaml` to non-overlapping ranges and recreate the cluster (`./scripts/escape-room.sh cleanup && ./scripts/escape-room.sh setup`).
+  2. Edit `podSubnet` and `serviceSubnet` in `kind/cluster-config.yaml` to non-overlapping ranges and recreate the cluster (`make cleanup && make setup`).
 
 ### Fallback 4: Cluster Created Previously with `kindnet` or Stuck Control-Plane Taint
 - **Symptom:** `setup` exits reporting `kindnet` is installed, or pods stay `Pending` with `node-role.kubernetes.io/control-plane:NoSchedule`.
 - **Fix:** Recreate the cluster cleanly:
   ```bash
-  ./scripts/escape-room.sh cleanup
-  ./scripts/escape-room.sh setup
+  make cleanup
+  make setup
   ```
 
 ### Fallback 5: MCP Server or CLI Agent Fails to Connect
 - **Symptom:** `npx kubernetes-mcp-server` or `opencode` errors out or lacks API credentials.
-- **Fix:** Switch immediately to **Tier 1 (Web Copilot)**. Every level's `./scripts/escape-room.sh ai-assist` and `./scripts/escape-room.sh hint` (Hint 3) are written for standard copy-paste chat assistants with zero loss of workshop functionality.
+- **Fix:** Switch immediately to **Tier 1 (Web Copilot)**. Every level's `make ai-assist` and `make hint` (Hint 3) are written for standard copy-paste chat assistants with zero loss of workshop functionality.

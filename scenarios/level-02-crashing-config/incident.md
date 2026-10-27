@@ -24,4 +24,4 @@ New customer orders are being accepted but are not being processed.
    ```
 2. Work out why the pod keeps restarting. There may be more than one cause.
 3. Apply the corrective configuration change(s) so the service stays up.
-4. Verify resolution using `./scripts/escape-room.sh verify`.
+4. Verify resolution using `make verify`.

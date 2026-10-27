@@ -2,7 +2,7 @@
 
 > **Instructor material.** This file contains the answers to every level. Do not share it with attendees before they finish the level.
 > Attendee-facing tips are in [`ai-prompts-cheatsheet.md`](ai-prompts-cheatsheet.md). Sources are in [`ai-research-notes.md`](ai-research-notes.md).
-> (It is kept out of `hints.md` on purpose: `./scripts/escape-room.sh hint` prints everything under a hint heading.)
+> (It is kept out of `hints.md` on purpose: `make hint` prints everything under a hint heading.)
 
 ## How to run an exercise
 

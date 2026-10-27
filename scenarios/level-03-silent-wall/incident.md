@@ -29,4 +29,4 @@ as healthy, yet customers cannot load their data.
      -n escape-level-03 -- curl -sv http://frontend-service.escape-level-03.svc.cluster.local/api/data
    ```
 3. Diagnose why the frontend cannot reach the backend, then apply the corrective change.
-4. Verify resolution using `./scripts/escape-room.sh verify`.
+4. Verify resolution using `make verify`.

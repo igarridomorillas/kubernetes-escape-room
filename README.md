@@ -17,18 +17,19 @@ Each level presents a realistic incident alert. Pods are broken, traffic is down
 | 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch | ✅ Available |
 | 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | ✅ Available |
 
-All levels run locally via a single CLI tool (or via `make` shortcuts):
+All levels run locally through `make` targets (the harness behind them is `scripts/escape-room.sh`):
 
 ```bash
-./scripts/escape-room.sh setup          # spin up a Kind cluster (or: make setup)
-./scripts/escape-room.sh start level-01 # inject the broken scenario (or: make start LEVEL=level-01)
-./scripts/escape-room.sh status         # check active level & pod statuses (or: make status)
-./scripts/escape-room.sh hint           # get a progressive hint (or: make hint)
-./scripts/escape-room.sh ai-assist      # tip for using an AI copilot on this level (or: make ai-assist)
-./scripts/escape-room.sh verify         # check if you've escaped (or: make verify)
-./scripts/escape-room.sh solve          # reveal the solution, instructor only (or: make solve)
-./scripts/escape-room.sh reset          # re-break the current level and retry (or: make reset)
-./scripts/escape-room.sh cleanup        # tear down the Kind cluster (or: make cleanup)
+make setup                     # spin up a Kind cluster with Cilium
+make prepare                   # setup + pull all images + build app images (see Prepare)
+make start LEVEL=level-01      # inject the broken scenario (level-01 … level-04)
+make status                    # check active level & pod statuses
+make hint                      # get a progressive hint
+make ai-assist                 # tip for using an AI copilot on this level
+make verify                    # check if you've escaped
+make solve                     # reveal the solution, instructor only
+make reset                     # re-break the current level and retry
+make cleanup                   # tear down the Kind cluster
 ```
 
 For instructors and contributors, `Makefile` also provides presentation and validation workflows:
@@ -99,13 +100,26 @@ kubernetes-escape-room/
 
 ## Prerequisites
 
+| Tool | Version | Check | Install (macOS) |
+|---|---|---|---|
+| `make` | any (GNU Make or the macOS Xcode one) | `make --version` | `xcode-select --install` |
+| `docker` | running daemon, `>= 4 GB` RAM | `docker info` | `brew install --cask docker` |
+| `kind` | `>= 0.20.0` | `kind --version` | `brew install kind` |
+| `kubectl` | `>= 1.28` | `kubectl version --client` | `brew install kubectl` |
+
+`make setup` checks `docker`, `kind` and `kubectl` for you and prints an install link if one is missing. It also installs Cilium (needed so Level 03's NetworkPolicy is enforced), so the first run pulls extra images and takes a few minutes longer. It writes a repo-local kubeconfig, `kind/.kube/config`, which the harness uses for every `kubectl` call, so your current kubectl context is never touched. A cluster created before Cilium was added must be recreated: `make cleanup`, then `make setup`. After a level is verified, the harness shows the next step (e.g. `make start LEVEL=level-02`); use `make start LEVEL=<level>` to move between levels.
+
+---
+
+## Prepare
+
+Run this once before the workshop (instructors, assistants and attendees), ideally on the venue network or a comparable connection:
+
 ```bash
-docker --version   # Docker Desktop
-kind --version     # >= 0.20.0
-kubectl version    # >= 1.28
+make prepare
 ```
 
-`./scripts/escape-room.sh setup` checks these for you and prints an install link if `docker` or `kind` is missing. `setup` also installs Cilium (needed so Level 03's NetworkPolicy is enforced), so the first run pulls extra images and takes a few minutes longer. It writes a repo-local kubeconfig, `kind/.kube/config`, which the CLI uses for every `kubectl` call, so your current kubectl context is never touched. A cluster created before Cilium was added must be recreated: `cleanup`, then `setup`. After a level is verified, the CLI shows the next step (e.g. `start level-02`); use `start <level>` to move between levels.
+It runs `make setup`, then pulls every image the scenarios use and builds the app images for Levels 02 and 04. Images are discovered dynamically from `scenarios/` (manifests, `verify.sh`, docs and Dockerfile `FROM` lines), so nothing needs to be listed by hand. This confirms registry access and covers the download bandwidth up front. Pulled images stay in the host Docker cache and are not loaded into the kind node.
 
 ---
 
