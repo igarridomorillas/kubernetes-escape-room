@@ -28,7 +28,7 @@ AI as a copilot, not an autopilot.
 </div>
 
 <!--
-Welcome attendees! Confirm everyone has cloned the repo and run `./scripts/escape-room.sh setup`.
+Welcome attendees! Confirm everyone has cloned the repo and run `make setup`.
 Timing: talk (slides 2-14) ~10 min, hands-on (15-22) ~40 min, debrief (23-24) ~5 min.
 -->
 
@@ -221,7 +221,7 @@ layout: default
 | **2. Hypothesize** | Paste the **complete** evidence | List **every** plausible cause, ranked, with quoted lines |
 | **3. Next check** | Pick one hypothesis | Give **one read-only** command that confirms or *disproves* it |
 | **4. Verify** | Run it yourself, paste back | Revise; apply **one** fix at a time and re-check |
-| **5. Communicate** | `./scripts/escape-room.sh verify` | Draft a 3-line update: impact, verified cause, fix |
+| **5. Communicate** | `make verify` | Draft a 3-line update: impact, verified cause, fix |
 
 </div>
 
@@ -515,12 +515,12 @@ layout: default
 ```bash
 export KUBECONFIG=kind/.kube/config
 
-./scripts/escape-room.sh start level-01
-./scripts/escape-room.sh status
-./scripts/escape-room.sh ai-assist
-./scripts/escape-room.sh hint
-./scripts/escape-room.sh verify
-./scripts/escape-room.sh reset
+make start LEVEL=level-01
+make status
+make ai-assist
+make hint
+make verify
+make reset
 ```
 
 </div>
@@ -558,7 +558,7 @@ layout: default
 <div class="col">
 
 ```bash
-./scripts/escape-room.sh start level-01
+make start LEVEL=level-01
 
 kubectl get pods -n escape-level-01
 kubectl describe pod -n escape-level-01 \
@@ -640,7 +640,7 @@ layout: default
 <div class="col">
 
 ```bash
-./scripts/escape-room.sh start level-02
+make start LEVEL=level-02
 
 kubectl get pods -n escape-level-02
 kubectl logs -n escape-level-02 -l app=order-processor
@@ -722,7 +722,7 @@ layout: default
 <div class="col">
 
 ```bash
-./scripts/escape-room.sh start level-03
+make start LEVEL=level-03
 
 kubectl get pods -n escape-level-03 --show-labels
 kubectl get svc,ep,netpol -n escape-level-03
@@ -841,8 +841,8 @@ layout: end
 </div>
 
 ```bash
-./scripts/escape-room.sh start level-04     # take-home
-./scripts/escape-room.sh cleanup            # remove the cluster and local kubeconfig
+make start LEVEL=level-04                   # take-home
+make cleanup                                # remove the cluster and local kubeconfig
 ```
 
 <!--
