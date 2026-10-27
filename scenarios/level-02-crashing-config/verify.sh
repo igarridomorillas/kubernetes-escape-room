@@ -4,7 +4,7 @@ set -euo pipefail
 # Pin kubectl to the escape-room cluster, never the user's current context
 KUBECONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/kind/.kube/config"
 if [[ ! -f "${KUBECONFIG}" ]]; then
-  echo "❌ Kind kubeconfig not found. Run: ./scripts/escape-room.sh setup"
+  echo "❌ Kind kubeconfig not found. Run: make setup"
   exit 1
 fi
 export KUBECONFIG

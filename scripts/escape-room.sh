@@ -136,12 +136,12 @@ print_next_steps() {
   next="$(next_level "${level}")"
   echo -e "${BOLD}What's next?${NC}"
   if [[ -n "${next}" ]]; then
-    echo -e "  Continue:   ${BOLD}./scripts/escape-room.sh start ${next}${NC}"
+    echo -e "  Continue:   ${BOLD}make start LEVEL=${next}${NC}"
   else
     echo -e "  ${GREEN}No further levels are available yet.${NC}"
   fi
-  echo -e "  Retry:      ${BOLD}./scripts/escape-room.sh reset${NC}"
-  echo -e "  Tear down:  ${BOLD}./scripts/escape-room.sh cleanup${NC}"
+  echo -e "  Retry:      ${BOLD}make reset${NC}"
+  echo -e "  Tear down:  ${BOLD}make cleanup${NC}"
   echo ""
 }
 
@@ -180,12 +180,12 @@ cluster_exists() {
 require_cluster() {
   if ! cluster_exists; then
     echo -e "${RED}✗ Kind cluster '${CLUSTER_NAME}' does not exist.${NC}"
-    echo -e "  Run ${BOLD}./scripts/escape-room.sh setup${NC} first."
+    echo -e "  Run ${BOLD}make setup${NC} first."
     exit 1
   fi
   if ! grep -q "kind-${CLUSTER_NAME}" "${KIND_KUBECONFIG}" 2>/dev/null; then
     echo -e "${RED}✗ Kubeconfig ${KIND_KUBECONFIG#"${SCRIPT_DIR}/"} is missing.${NC}"
-    echo -e "  Run ${BOLD}./scripts/escape-room.sh setup${NC} to regenerate it."
+    echo -e "  Run ${BOLD}make setup${NC} to regenerate it."
     exit 1
   fi
   export KUBECONFIG="${KIND_KUBECONFIG}"
@@ -196,7 +196,7 @@ require_state() {
   level="$(read_state CURRENT_LEVEL)"
   if [[ -z "${level}" ]]; then
     echo -e "${RED}✗ No active level.${NC}"
-    echo -e "  Run ${BOLD}./scripts/escape-room.sh start <level>${NC} first."
+    echo -e "  Run ${BOLD}make start LEVEL=<level>${NC} first."
     exit 1
   fi
 }
@@ -221,7 +221,7 @@ validate_level() {
 check_not_kindnet() {
   if kubectl get daemonset kindnet -n kube-system > /dev/null 2>&1; then
     echo -e "${RED}✗ Cluster '${CLUSTER_NAME}' was created with kindnet, which does not enforce NetworkPolicy.${NC}"
-    echo -e "  Run ${BOLD}./scripts/escape-room.sh cleanup${NC} followed by ${BOLD}./scripts/escape-room.sh setup${NC}."
+    echo -e "  Run ${BOLD}make cleanup${NC} followed by ${BOLD}make setup${NC}."
     exit 1
   fi
 }
@@ -289,7 +289,7 @@ cmd_setup() {
   init_state
 
   print_banner "${GREEN}" "✅  Setup complete — cluster is ready"
-  echo -e "  Run ${BOLD}./scripts/escape-room.sh start level-01${NC} to begin."
+  echo -e "  Run ${BOLD}make start LEVEL=level-01${NC} to begin."
   echo ""
 }
 
@@ -350,7 +350,7 @@ remove_other_levels() {
 cmd_start() {
   local level="${1:-}"
   if [[ -z "${level}" ]]; then
-    echo -e "${RED}✗ Usage: ./scripts/escape-room.sh start <level>${NC}"
+    echo -e "${RED}✗ Usage: make start LEVEL=<level>${NC}"
     echo -e "  Valid levels: ${VALID_LEVELS}"
     exit 1
   fi
@@ -414,10 +414,10 @@ cmd_start() {
   fi
 
   echo -e "${BOLD}Useful commands:${NC}"
-  echo -e "  ${CYAN}./scripts/escape-room.sh status${NC}   — see pod states"
-  echo -e "  ${CYAN}./scripts/escape-room.sh hint${NC}     — get your first hint"
-  echo -e "  ${CYAN}./scripts/escape-room.sh ai-assist${NC} — tips for using an AI copilot on this level"
-  echo -e "  ${CYAN}./scripts/escape-room.sh verify${NC}   — check if you've fixed it"
+  echo -e "  ${CYAN}make status${NC}   — see pod states"
+  echo -e "  ${CYAN}make hint${NC}     — get your first hint"
+  echo -e "  ${CYAN}make ai-assist${NC} — tips for using an AI copilot on this level"
+  echo -e "  ${CYAN}make verify${NC}   — check if you've fixed it"
   echo ""
 }
 
@@ -490,7 +490,7 @@ cmd_hint() {
 
   if [[ "${hint_level}" -ge 3 ]]; then
     echo -e "${YELLOW}⚠  You've already used all 3 hints.${NC}"
-    echo -e "  Use ${BOLD}./scripts/escape-room.sh solve${NC} if you're truly stuck (instructor only)."
+    echo -e "  Use ${BOLD}make solve${NC} if you're truly stuck (instructor only)."
     return
   fi
 
@@ -596,7 +596,7 @@ cmd_verify() {
     print_next_steps "${level}"
   else
     echo ""
-    echo -e "${YELLOW}⚠  Not fixed yet. Run ${BOLD}./scripts/escape-room.sh hint${NC}${YELLOW} for your next clue.${NC}"
+    echo -e "${YELLOW}⚠  Not fixed yet. Run ${BOLD}make hint${NC}${YELLOW} for your next clue.${NC}"
     exit 1
   fi
 }
@@ -641,7 +641,7 @@ cmd_solve() {
     echo -e "${YELLOW}⚠  Deployments are not ready after 120s. Check: kubectl get pods -n ${namespace}${NC}"
   fi
   echo ""
-  echo -e "Run ${BOLD}./scripts/escape-room.sh verify${NC} to confirm the level is complete."
+  echo -e "Run ${BOLD}make verify${NC} to confirm the level is complete."
 }
 
 # ─── Command: reset ───────────────────────────────────────────────────────────
@@ -716,7 +716,7 @@ cmd_cleanup() {
   fi
 
   echo ""
-  echo -e "Run ${BOLD}./scripts/escape-room.sh setup${NC} to create a fresh cluster."
+  echo -e "Run ${BOLD}make setup${NC} to create a fresh cluster."
   echo ""
 }
 
@@ -724,11 +724,11 @@ cmd_cleanup() {
 
 cmd_usage() {
   print_header
-  echo -e "${BOLD}Usage:${NC}  ./scripts/escape-room.sh <command> [args]"
+  echo -e "${BOLD}Usage:${NC}  make <command> [LEVEL=<level>]"
   echo ""
   echo -e "${BOLD}Commands:${NC}"
   echo -e "  ${CYAN}setup${NC}              Check prerequisites and create the Kind cluster"
-  echo -e "  ${CYAN}start <level>${NC}      Begin a level (e.g. level-01, level-02, level-03, level-04)"
+  echo -e "  ${CYAN}start LEVEL=<level>${NC} Begin a level (e.g. level-01, level-02, level-03, level-04)"
   echo -e "  ${CYAN}status${NC}             Show active scenario, pod statuses, troubleshooting tips"
   echo -e "  ${CYAN}hint${NC}               Display the next progressive hint (1 → 2 → 3)"
   echo -e "  ${CYAN}ai-assist${NC}          Show an AI copilot tip for the current level (does not use a hint)"
