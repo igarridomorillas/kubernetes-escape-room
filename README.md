@@ -4,6 +4,35 @@
 
 A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to diagnose and fix intentionally broken Kubernetes scenarios, using AI copilots, CLI agents, and agentic harnesses as their debugging partners.
 
+> [!WARNING]
+> **Partially vibe-coded, on purpose.** Parts of this repository were vibe coded with AI tools as an experiment: we wanted to see how far an AI-assisted approach gets us when preparing this workshop. As SREs, we would never ship this way to production, but for a workshop we are keeping it relaxed. Treat the code as a fun experiment and review it before reusing it anywhere that matters. 😄
+
+---
+
+## Prerequisites
+
+> [!NOTE]
+> **Supported platforms:** macOS and Linux distributions. Windows is not supported.
+
+| Tool | Version | Check | Install guide |
+|---|---|---|---|
+| `make` | any | `make --version` | [GNU Make](https://www.gnu.org/software/make/) |
+| `docker` | daemon running | `docker info` | [Docker Desktop](https://docs.docker.com/desktop/) (macOS) / [Docker Engine](https://docs.docker.com/engine/install/) (Linux) |
+| `kind` | `>= 0.20.0` | `kind --version` | [kind quick start](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) |
+| `kubectl` | `>= 1.28` | `kubectl version --client` | [Install tools](https://kubernetes.io/docs/tasks/tools/#kubectl) |
+
+---
+
+## Prepare
+
+Run this once before the workshop (instructors, assistants and attendees), ideally on the venue network or a comparable connection:
+
+```bash
+make prepare
+```
+
+It runs `make setup`, then pulls every image the scenarios use and builds the app images for Levels 02 and 04. Images are discovered dynamically from `scenarios/` (manifests, `verify.sh`, docs and Dockerfile `FROM` lines), so nothing needs to be listed by hand. This confirms registry access and covers the download bandwidth up front. Pulled images stay in the host Docker cache and are not loaded into the kind node.
+
 ---
 
 ## How it works
@@ -16,6 +45,23 @@ Each level presents a realistic incident alert. Pods are broken, traffic is down
 | 02 | The Crashing Config | ⭐⭐ Core | `CrashLoopBackOff` / OOMKill + ConfigMap mismatch | ✅ Available |
 | 03 | The Silent Wall | ⭐⭐⭐ Boss | NetworkPolicy + Service port mismatch | ✅ Available |
 | 04 | The Ghost in the Microservices | ⭐⭐⭐⭐ Bonus | Cascading 500s hidden in log noise | ✅ Available |
+
+### How to use
+
+Run the steps in this order. Every level needs a cluster first, so `make setup` (or `make prepare`) always comes before `make start`.
+
+1. **Create the cluster (once):** `make setup`, or `make prepare` to also pre-pull images and build the app images.
+2. **Start a level:** `make start LEVEL=level-01`. It injects the broken scenario and shows the incident alert.
+3. **Investigate and fix it** with `kubectl` and your AI copilot. While you work, you can use:
+   - `make status`: active level and pod statuses.
+   - `make hint`: next progressive hint (concept, then investigation commands, then an AI prompt recipe).
+   - `make ai-assist`: AI copilot tip for the level. It never spoils the fix and doesn't use up a hint.
+4. **Check your fix:** `make verify`. On success the level is marked completed and the next step is shown.
+5. **If you get stuck or want to retry:**
+   - `make reset`: re-break the current level and try again.
+   - `make solve`: apply the reference solution (instructor only).
+6. **Move on:** `make start LEVEL=level-02` (then `level-03`, `level-04`). Starting a level removes the other levels' namespaces, so only one scenario is live at a time.
+7. **Finish:** `make cleanup` tears down the cluster and removes the local state.
 
 All levels run locally through `make` targets (the harness behind them is `scripts/escape-room.sh`):
 
@@ -31,6 +77,13 @@ make solve                     # reveal the solution, instructor only
 make reset                     # re-break the current level and retry
 make cleanup                   # tear down the Kind cluster
 ```
+
+> [!NOTE]
+> **Kubeconfig:** `make setup` writes a repo-local kubeconfig to `kind/.kube/config` (gitignored, removed by `make cleanup`). Every `make` target and `verify.sh` uses it automatically, so your current `kubectl` context is never touched. To run your own `kubectl` commands against the escape-room cluster, point your shell at it from the repository root:
+>
+> ```bash
+> export KUBECONFIG="$PWD/kind/.kube/config"
+> ```
 
 For instructors and contributors, `Makefile` also provides presentation and validation workflows:
 
@@ -95,31 +148,6 @@ kubernetes-escape-room/
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
     └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
-
----
-
-## Prerequisites
-
-| Tool | Version | Check | Install (macOS) |
-|---|---|---|---|
-| `make` | any (GNU Make or the macOS Xcode one) | `make --version` | `xcode-select --install` |
-| `docker` | running daemon, `>= 4 GB` RAM | `docker info` | `brew install --cask docker` |
-| `kind` | `>= 0.20.0` | `kind --version` | `brew install kind` |
-| `kubectl` | `>= 1.28` | `kubectl version --client` | `brew install kubectl` |
-
-`make setup` checks `docker`, `kind` and `kubectl` for you and prints an install link if one is missing. It also installs Cilium (needed so Level 03's NetworkPolicy is enforced), so the first run pulls extra images and takes a few minutes longer. It writes a repo-local kubeconfig, `kind/.kube/config`, which the harness uses for every `kubectl` call, so your current kubectl context is never touched. A cluster created before Cilium was added must be recreated: `make cleanup`, then `make setup`. After a level is verified, the harness shows the next step (e.g. `make start LEVEL=level-02`); use `make start LEVEL=<level>` to move between levels.
-
----
-
-## Prepare
-
-Run this once before the workshop (instructors, assistants and attendees), ideally on the venue network or a comparable connection:
-
-```bash
-make prepare
-```
-
-It runs `make setup`, then pulls every image the scenarios use and builds the app images for Levels 02 and 04. Images are discovered dynamically from `scenarios/` (manifests, `verify.sh`, docs and Dockerfile `FROM` lines), so nothing needs to be listed by hand. This confirms registry access and covers the download bandwidth up front. Pulled images stay in the host Docker cache and are not loaded into the kind node.
 
 ---
 
