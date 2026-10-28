@@ -28,33 +28,10 @@ kubectl get pods -n escape-level-03 --show-labels
 
 Check the `from` selector of the ingress rule against the labels on the frontend pod.
 
-## Hint 3: AI Copilot Prompt Recipe
-Use the **SRE Copilot Prompt Pattern** (Context + Symptom + kubectl output + Goal)
-with your favorite AI copilot (Gemini, ChatGPT, or Claude):
+## Hint 3: Time to Ask the Robot
+Plot twist: today the AI is actually useful. 🤖
 
-Copy and paste the following prompt into your AI copilot:
+Every pod is healthy and yet nobody can talk to anybody. Run `make ai-assist`, paste the prompt
+into your AI agent and let it chase the traffic across resources while you stretch your legs.
 
-```text
-I am troubleshooting an incident in a Kubernetes cluster. Pods are all Running 1/1,
-but the frontend returns 504 Gateway Time-out (or 502 Bad Gateway) when it calls the backend.
-
-[Context]
-Namespace: escape-level-03
-Frontend: Deployment frontend, Service frontend-service (port 80)
-Backend: Deployment backend (container listens on a port), Service backend-service
-NetworkPolicy: backend-firewall (selects the backend pods)
-
-[Symptom]
-frontend-service returns 504 / 502 for GET /api/data. Pods are Running and Ready.
-
-[kubectl output]
-<PASTE OUTPUT OF: kubectl get endpoints -n escape-level-03>
-<PASTE OUTPUT OF: kubectl get svc backend-service -n escape-level-03 -o yaml>
-<PASTE OUTPUT OF: kubectl get netpol backend-firewall -n escape-level-03 -o yaml>
-<PASTE OUTPUT OF: kubectl get pods -n escape-level-03 --show-labels>
-
-[Goal]
-1. Why is traffic from the frontend being dropped or refused? Quote the exact fields that disagree.
-2. Provide the minimal kubectl command or YAML patch to fix the Service and the NetworkPolicy.
-3. Explain how to confirm each fix separately before you apply the other.
-```
+Check its homework, though: the AI proposes, the cluster decides.

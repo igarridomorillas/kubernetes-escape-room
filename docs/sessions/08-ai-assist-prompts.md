@@ -18,6 +18,7 @@
 
 | File | Purpose |
 |---|---|
+| [`scenarios/*/hints.md`](../../scenarios/) | Hint 3 replaced by a short pointer to `make ai-assist` |
 | [`scenarios/*/ai-assist.md`](../../scenarios/) | Rewritten: manual evidence commands, a bad prompt, the paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt and a short "why" |
 | [`scripts/escape-room.sh`](../../scripts/escape-room.sh) | New `render_markdown`: pipes `incident.md`, hints and `ai-assist.md` through `glow` when installed, else `cat` |
 | [`README.md`](../../README.md), [`docs/pre-workshop-checklist.md`](../pre-workshop-checklist.md) | `glow` listed as an optional prerequisite; `ai-assist` description and Tier 1 fallback updated |
@@ -36,7 +37,8 @@
 6. **"Read-only" is an instruction, not a guarantee.** Prompts forbid mutating commands, `make` targets and reading Secrets, but the MCP/CLI-agent restrictions in the pre-workshop checklist remain the real guardrail.
 7. **Bad prompts are terse on purpose** (`My payment-gateway pod is in ImagePullBackOff. Fix it.`). A realistic bad prompt is a symptom plus "fix it", not a long prompt with a subtle flaw.
 8. **`glow` is optional and zero-margin.** Its default style indents by 2 columns, indents code blocks further and pads every line with trailing spaces, so selected text does not paste back as written. A minimal embedded style (`margin: 0`, `-w 0`) fixes that. The harness never installs glow (rule 1 exception, documented in `AGENTS.md`).
-9. **Process lessons:** prompts avoid the section-sign symbol; a line-range edit that ends at the first `}` breaks a function containing a JSON heredoc, so edit such functions with exact string matches; commits carry no AI co-author trailer.
+9. **Hint 3 is only a pointer.** The old Hint 3 prompt templates duplicated `ai-assist`, kept the paste-the-output placeholders and asked for fixes directly. Each level's Hint 3 is now a short, funny nudge to run `make ai-assist` (the heading must stay `## Hint 3` for `extract_hint`).
+10. **Process lessons:** prompts avoid the section-sign symbol; a line-range edit that ends at the first `}` breaks a function containing a JSON heredoc, so edit such functions with exact string matches; commits carry no AI co-author trailer.
 
 ---
 
@@ -45,7 +47,7 @@
 Checks run:
 - `shellcheck scripts/escape-room.sh` clean; script still `750`.
 - No placeholders, section-sign symbols or absolute home paths in `scenarios/*/ai-assist.md`.
-- glow style tested on `ai-assist.md` with the colour codes stripped: no leading or trailing spaces except where the prompt text is itself indented.
+- glow style tested on level 01's `ai-assist.md` only, with the colour codes stripped: no leading or trailing spaces except where the prompt text is itself indented.
 
 Not run (left unchecked below): the cluster flows, glow on screen in a real terminal, and the prompts against an agent with `kubectl` access.
 

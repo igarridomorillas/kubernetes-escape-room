@@ -55,7 +55,7 @@ Run the steps in this order. Every level needs a cluster first, so `make setup` 
 2. **Start a level:** `make start LEVEL=level-01`. It injects the broken scenario and shows the incident alert.
 3. **Investigate and fix it** with `kubectl` and your AI copilot. While you work, you can use:
    - `make status`: active level and pod statuses.
-   - `make hint`: next progressive hint (concept, then investigation commands, then an AI prompt recipe).
+   - `make hint`: next progressive hint (concept, then investigation commands, then a nudge to run `make ai-assist`).
    - `make ai-assist`: a paste-ready prompt for an AI agent with `kubectl` access, plus a bad-prompt example and a follow-up prompt. It never spoils the fix and doesn't use up a hint.
 4. **Check your fix:** `make verify`. On success the level is marked completed and the next step is shown.
 5. **If you get stuck or want to retry:**
