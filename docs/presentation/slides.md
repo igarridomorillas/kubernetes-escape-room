@@ -29,7 +29,7 @@ AI as a copilot, not an autopilot.
 
 <!--
 Welcome attendees! Confirm everyone has cloned the repo and run `make setup`.
-Timing: talk (slides 2-14) ~10 min, hands-on (15-22) ~40 min, debrief (23-24) ~5 min.
+Timing: talk (slides 2-13) ~10 min, hands-on (14-17) ~40 min, debrief (18) ~5 min, follow-up resources and close (19-20).
 -->
 
 ---
@@ -49,7 +49,7 @@ layout: default
 
 <div class="grid-3">
   <div class="card"><h4><carbon-idea /> You will leave with</h4><span class="small">A repeatable, evidence-first way to use AI during an incident.</span></div>
-  <div class="card"><h4><carbon-tools /> You will see</h4><span class="small">Chat, <code>k8sgpt</code>, MCP servers, CLI agents, and shared skills.</span></div>
+  <div class="card"><h4><carbon-tools /> You will see</h4><span class="small">Chat, MCP servers, CLI agents, and shared skills.</span></div>
   <div class="card"><h4><carbon-play-filled /> You will practice</h4><span class="small">Three broken scenarios, with AI helping (and sometimes misleading) you.</span></div>
 </div>
 
@@ -221,7 +221,7 @@ layout: default
 | **2. Hypothesize** | Paste the **complete** evidence | List **every** plausible cause, ranked, with quoted lines |
 | **3. Next check** | Pick one hypothesis | Give **one read-only** command that confirms or *disproves* it |
 | **4. Verify** | Run it yourself, paste back | Revise; apply **one** fix at a time and re-check |
-| **5. Communicate** | `make verify` | Draft a 3-line update: impact, verified cause, fix |
+| **5.&nbsp;Communicate** | `make verify`, then share **verified facts** only | Draft a 3-line update: impact, verified cause, fix |
 
 </div>
 
@@ -346,59 +346,15 @@ layout: default
 | Tier | Tool | Good for | Watch out for |
 | :--- | :--- | :--- | :--- |
 | **1** | **Web chat** | Zero setup; paste raw output | Copy-paste effort; secrets leaking into prompts |
-| **2** | **`k8sgpt`** | Fast scan with built-in analyzers, then an explanation | Only as good as its analyzers; free-form events can bypass anonymization |
-| **3** | **Kubernetes MCP server** | AI client reads live cluster state through typed tools | Scope credentials; read-only mode limits the server, not your kubeconfig |
-| **4** | **CLI agents** (`opencode`, `kubectl-ai`) | Agent runs the investigation loop for you | Allow `get`/`describe`/`logs`; deny `delete`/`apply`/`patch`/`exec` |
+| **2** | **Kubernetes MCP server** | AI client reads live cluster state through typed tools | Scope credentials; read-only mode limits the server, not your kubeconfig |
+| **3** | **CLI agents** (`opencode`, `kubectl-ai`) | Agent runs the investigation loop for you | Allow `get`/`describe`/`logs`; deny `delete`/`apply`/`patch`/`exec` |
 
-<div class="tip"><b>Rule of thumb:</b> explain → 1 · scan → 2 · live read-only → 3 · agents: sandbox or non-prod only.</div>
+<div class="tip"><b>Rule of thumb:</b> explain → 1 · live read-only → 2 · agents: sandbox or non-prod only.</div>
 
 </div>
 
 <!--
 More autonomy means a larger blast radius. Move up a tier only when the lower one is the bottleneck. Web chat is the baseline for everyone today.
--->
-
----
-layout: default
----
-
-<div class="kicker">Part 3 · AI in practice</div>
-
-# k8sgpt: analyzers first, LLM second
-
-<div class="body">
-
-<div class="grid-2">
-<div>
-
-```bash
-# Local analyzers only, no LLM call
-k8sgpt analyze --namespace escape-level-01
-
-# Add a plain-language explanation
-k8sgpt analyze --explain \
-  --namespace escape-level-01
-
-# Mask sensitive fields before sending
-k8sgpt analyze --explain --anonymize \
-  --namespace escape-level-01
-
-# Include NetworkPolicy checks (Level 03)
-k8sgpt analyze --filter=NetworkPolicy \
-  --namespace escape-level-03
-```
-
-</div>
-<div class="col">
-<div class="card grow"><h4><carbon-settings /> How it works</h4><span class="small">Built-in analyzers (<code>Pod</code>, <code>Deployment</code>, <code>Service</code>, optional <code>NetworkPolicy</code>) find problems locally. <code>--explain</code> sends the structured finding to your configured AI backend.</span></div>
-<div class="card warn grow"><h4><carbon-warning-alt /> Use it as a first look</h4><span class="small">A good evidence summarizer, not a verdict. Cross-check with <code>describe</code> and <code>logs</code>. <code>--anonymize</code> does not catch secrets inside free-form event text.</span></div>
-</div>
-</div>
-
-</div>
-
-<!--
-Not run on the build machine (see docs/ai-research-notes.md, M4); re-check flags against the k8sgpt docs before the event. Backends are configured with `k8sgpt auth`; a local model avoids sending cluster data off-machine.
 -->
 
 ---
@@ -495,41 +451,29 @@ layout: default
 
 <div class="body">
 
-<div class="grid-2">
-<div class="col">
-<div class="card grow"><h4><carbon-security /> Contracts</h4>
+<div class="card"><h4><carbon-security /> Ground rules &amp; help ladder</h4>
 <ul class="small">
   <li>One namespace per level (<code>escape-level-01</code> … <code>03</code>)</li>
-  <li><code>setup</code> writes a repo-local kubeconfig: <code>kind/.kube/config</code></li>
-  <li><code>verify</code> runs a real in-cluster probe</li>
+  <li><code>setup</code> writes a repo-local kubeconfig: <code>kind/.kube/config</code>, so <code>kubectl</code> only talks to the room</li>
+  <li><code>verify</code> runs a real in-cluster probe: it passes only when the service truly works</li>
+  <li><b>Help ladder:</b> <code>hint</code> (1 concept → 2 commands → 3 a nudge to use <code>ai-assist</code>), then <code>ai-assist</code> (free, spoiler-free prompt to paste into an AI agent)</li>
 </ul></div>
-<div class="card grow"><h4><carbon-idea /> Help ladder</h4>
-<ul class="small">
-  <li><code>ai-assist</code>: free, spoiler-free prompt to paste into an AI agent</li>
-  <li><code>hint</code>: 1 concept → 2 commands → 3 a nudge to use <code>ai-assist</code></li>
-</ul></div>
-</div>
-
-<div>
 
 ```bash
 export KUBECONFIG=kind/.kube/config
 
-make start LEVEL=level-01
-make status
-make ai-assist
-make hint
-make verify
-make reset
+make start LEVEL=level-01  # break a level
+make status                # where am I?
+make hint                  # next hint (1 → 3)
+make ai-assist             # agent-ready prompt
+make verify                # did I escape?
+make reset                 # re-break and retry
 ```
-
-</div>
-</div>
 
 </div>
 
 <!--
-Emphasize ai-assist is free and gives no spoilers: use it at the start of every level.
+Emphasize ai-assist is free and gives no spoilers, and it does not use up a hint. Hint 3 points to it.
 -->
 
 ---
@@ -549,23 +493,20 @@ layout: default
   <ul class="small">
     <li><b>Service:</b> <code>payment-gateway</code> in <code>escape-level-01</code></li>
     <li><b>Symptom:</b> <code>0/1</code> pods ready; checkout fails with <code>503</code></li>
+    <li><b>Impact:</b> 100% of checkout requests failing; global payment processing halted</li>
+    <li><b>Status:</b> <code>TRIGGERED</code> (unacknowledged), P1</li>
     <li><b>Goal:</b> <code>Running 1/1</code> and <code>verify</code> passes</li>
   </ul>
 </div>
-<div class="tip"><b>AI tip:</b> paste the verbatim <i>Events</i> and add a negative constraint.</div>
 </div>
 
 <div class="col">
 
 ```bash
 make start LEVEL=level-01
-
-kubectl get pods -n escape-level-01
-kubectl describe pod -n escape-level-01 \
-  -l app=payment-gateway
 ```
 
-<div class="tiny">Try a vague prompt first, then a structured one with the full Events block.</div>
+<div class="tip"><b>Tip:</b> stuck? Run <code>make hint</code> for the next hint.</div>
 </div>
 </div>
 
@@ -573,45 +514,6 @@ kubectl describe pod -n escape-level-01 \
 
 <!--
 Start the 8-10 minute timer.
--->
-
----
-layout: default
----
-
-<div class="kicker">Level 01 · Debrief</div>
-
-# Evidence beats guessing
-
-<div class="body">
-
-<div class="grid-2">
-<div class="card bad">
-
-#### <carbon-close-filled /> Without Events
-
-Generic 3-branch checklist, wasted time on `imagePullSecrets` for a public image, or an **invented tag** / `:latest`.
-
-</div>
-<div class="card good">
-
-#### <carbon-checkmark-filled /> Verbatim Events + a constraint
-
-```text
-Quote the exact line showing WHY the pull
-failed. Auth, network, or missing tag?
-Do not invent a replacement tag.
-```
-
-The line says `not found` (`NotFound`, not 401/403). Pin an existing `nginx:1.27-alpine`.
-
-</div>
-</div>
-
-</div>
-
-<!--
-The negative constraint "Do not invent a replacement tag" stops the model from guessing tags from training memory.
 -->
 
 ---
@@ -631,26 +533,20 @@ layout: default
   <ul class="small">
     <li><b>Service:</b> <code>order-processor</code> in <code>escape-level-02</code></li>
     <li><b>Symptom:</b> restarting (<code>CrashLoopBackOff</code>, <code>OOMKilled</code>); queue growing</li>
+    <li><b>Impact:</b> orders accepted but not processed; 0 processed in the last 10 min</li>
+    <li><b>Status:</b> <code>TRIGGERED</code> (unacknowledged), P1</li>
     <li><b>Goal:</b> stable <code>Running 1/1</code>, <code>/healthz</code> healthy</li>
   </ul>
 </div>
-<div class="tip"><b>AI tip:</b> bundle logs + describe + config in one prompt; apply one fix at a time.</div>
 </div>
 
 <div class="col">
 
 ```bash
 make start LEVEL=level-02
-
-kubectl get pods -n escape-level-02
-kubectl logs -n escape-level-02 -l app=order-processor
-kubectl describe pod -n escape-level-02 \
-  -l app=order-processor
-kubectl get configmap order-config \
-  -n escape-level-02 -o yaml
 ```
 
-<div class="tiny">Hint: there may be more than one cause.</div>
+<div class="tip"><b>Tip:</b> stuck? Run <code>make hint</code> for the next hint.</div>
 </div>
 </div>
 
@@ -658,42 +554,6 @@ kubectl get configmap order-config \
 
 <!--
 Start the 12-15 minute timer. Remind attendees to collect ALL evidence sources.
--->
-
----
-layout: default
----
-
-<div class="kicker">Level 02 · Debrief</div>
-
-# Compound faults
-
-<div class="body">
-
-<div class="grid-2">
-<div class="card bad">
-
-#### <carbon-close-filled /> Logs only, first error only
-
-The AI explains `KeyError: 'DATABASE_URL'` and stops. After the ConfigMap fix the pod **still crashes**.
-
-</div>
-<div class="card good">
-
-#### <carbon-checkmark-filled /> Logs + describe + ConfigMap
-
-- **Cause 1:** app wants `DATABASE_URL`, the ConfigMap defines another key
-- **Cause 2:** `OOMKilled` (exit 137), memory limit below the 32MiB cache
-
-</div>
-</div>
-
-<div class="tip"><b>Takeaway:</b> ask for <b>all</b> distinct causes up front; change <b>one</b> thing at a time and watch the symptom shift.</div>
-
-</div>
-
-<!--
-Fixing the ConfigMap first clears the KeyError but still OOM-kills; fixing memory first lets the container reach the clean exit. Both orders teach the point.
 -->
 
 ---
@@ -711,26 +571,23 @@ layout: default
 <div class="pager">
   <div class="pager-head"><carbon-notification /> <span class="id">PAGE #INC-8103</span> <span class="chip red">CRITICAL</span> <span class="chip"><carbon-time /> 15–20 min</span></div>
   <ul class="small">
+    <li><b>Service:</b> <code>frontend-service</code> in <code>escape-level-03</code></li>
     <li><b>Path:</b> <code>frontend-service</code> → <code>backend-service</code></li>
     <li><b>Symptom:</b> all pods <code>Running 1/1</code>, yet <code>/api/data</code> returns <code>504</code> / <code>502</code></li>
+    <li><b>Impact:</b> 100% of <code>/api/data</code> requests failing; account and order pages blank</li>
+    <li><b>Status:</b> <code>TRIGGERED</code> (unacknowledged), P1</li>
     <li><b>Goal:</b> <code>/api/data</code> returns <code>200</code></li>
   </ul>
 </div>
-<div class="tip"><b>AI tip:</b> ask for ONE read-only command that would disprove its top hypothesis.</div>
 </div>
 
 <div class="col">
 
 ```bash
 make start LEVEL=level-03
-
-kubectl get pods -n escape-level-03 --show-labels
-kubectl get svc,ep,netpol -n escape-level-03
-kubectl get netpol backend-firewall \
-  -n escape-level-03 -o yaml
 ```
 
-<div class="tiny">Before pasting all the YAML, run the next slide's exercise.</div>
+<div class="tip"><b>Tip:</b> stuck? Run <code>make hint</code> for the next hint.</div>
 </div>
 </div>
 
@@ -738,65 +595,6 @@ kubectl get netpol backend-firewall \
 
 <!--
 Start the 15-20 minute timer.
--->
-
----
-layout: default
----
-
-<div class="kicker">Level 03 · Exercise</div>
-
-# Challenge the AI's hypothesis
-
-<div class="body">
-
-<div class="sub">Practice stages 3 and 4: test a confident guess with <b>read-only</b> checks.</div>
-
-<div class="grid-3">
-  <div class="card"><span class="chip">Step 1</span><h4 class="pt-2">Give incomplete evidence</h4><span class="small">Tell the AI only: all pods are <code>Running</code>, the frontend returns <code>504</code>. Ask for the likely cause <b>and one command to disprove it</b>.</span></div>
-  <div class="card"><span class="chip">Step 2</span><h4 class="pt-2">Disprove with checks</h4><span class="small">DNS resolves the Service (rules out DNS). <code>kubectl get ep</code> shows the endpoint and its port.</span></div>
-  <div class="card warn"><span class="chip red">Step 3</span><h4 class="pt-2">Spot the classic trap</h4><span class="small">Models claim an "IP mismatch" between DNS and Endpoints. One is the <b>Service ClusterIP</b> subnet, the other the <b>Pod</b> subnet.</span></div>
-</div>
-
-<div class="quote">How many of you saw your AI blame DNS, or confuse a ClusterIP with a Pod IP?</div>
-
-</div>
-
-<!--
-Run for about 5 minutes. The goal is not the fix, it is practicing disproving a plausible-sounding answer.
--->
-
----
-layout: default
----
-
-<div class="kicker">Level 03 · Debrief</div>
-
-# Two faults, one symptom
-
-<div class="body">
-
-<div class="grid-2">
-<div class="col">
-<div class="card grow">
-
-#### <carbon-search /> Two disagreements across resources
-
-1. **NetworkPolicy** allows a label the frontend does not have, so SYNs are dropped: <span class="chip red">504</span>
-2. **Service `targetPort`** does not match the container port, so connections are refused: <span class="chip red">502</span>
-
-</div>
-</div>
-<div class="col">
-<div class="card warn grow"><h4><carbon-flow-stream /> Verification order matters</h4><span class="small">Fix <code>targetPort</code> first and <code>curl</code> still times out, because the firewall masks it. Check <code>kubectl get ep</code> (control plane), or fix the policy first (<code>504</code> becomes <code>502</code>).</span></div>
-<div class="card bad grow"><h4><carbon-security /> Reject unsafe shortcuts</h4><div class="small"><span class="chip red">kubectl delete netpol</span> <span class="chip red">podSelector: {}</span> <span class="chip red">hostNetwork: true</span></div></div>
-</div>
-</div>
-
-</div>
-
-<!--
-Control-plane check (endpoints) vs data-plane check (curl). Safety score is zero for "delete the firewall".
 -->
 
 ---
@@ -822,6 +620,49 @@ layout: default
 
 <!--
 Ask teams to score their copilot: who caught the mistakes, the human or the AI?
+-->
+
+---
+layout: default
+---
+
+<div class="kicker">Follow-up · Keep exploring</div>
+
+# Follow-up resources: k8sgpt and HolmesGPT
+
+<div class="body">
+
+<div class="grid-2">
+<div class="col">
+<div class="card grow"><h4><carbon-settings /> k8sgpt: analyzers first, LLM second</h4><span class="small">Built-in analyzers (<code>Pod</code>, <code>Deployment</code>, <code>Service</code>, optional <code>NetworkPolicy</code>) find problems locally. <code>--explain</code> sends the structured finding to your configured AI backend. Use it as a first look, not a verdict: <code>--anonymize</code> does not catch secrets inside free-form event text.</span></div>
+
+```bash
+# Local analyzers only, no LLM call
+k8sgpt analyze --namespace escape-level-01
+
+# Plain-language explanation, masked fields
+k8sgpt analyze --explain --anonymize \
+  --namespace escape-level-01
+
+# Include NetworkPolicy checks (Level 03)
+k8sgpt analyze --filter=NetworkPolicy \
+  --namespace escape-level-03
+```
+
+</div>
+<div class="col">
+<div class="card grow"><h4><carbon-bot /> HolmesGPT: an agent that investigates</h4><span class="small">Open-source AI agent for troubleshooting. It runs the investigation loop itself, calling read-only tools (<code>kubectl</code>, logs, metrics) and returning a root-cause explanation. Same rule as every tier: least privilege, non-prod first.</span></div>
+<div class="card grow"><h4><carbon-link /> Links</h4><ul class="small">
+  <li><code>github.com/k8sgpt-ai/k8sgpt</code></li>
+  <li><code>github.com/HolmesGPT/holmesgpt</code></li>
+</ul></div>
+</div>
+</div>
+
+</div>
+
+<!--
+Not run on the build machine (see docs/ai-research-notes.md, M4); re-check flags against each project's docs before pointing attendees at them. k8sgpt backends are configured with `k8sgpt auth`; a local model avoids sending cluster data off-machine.
 -->
 
 ---
