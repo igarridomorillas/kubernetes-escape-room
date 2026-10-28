@@ -540,7 +540,8 @@ render_markdown() {
   "code": { "color": "81" },
   "block_quote": { "color": "244", "indent": 0 },
   "code_block": { "color": "114", "margin": 0 },
-  "item": { "block_prefix": "• " }
+  "item": { "block_prefix": "• " },
+  "enumeration": { "block_prefix": ". " }
 }
 JSON
     glow -s "${style}" -w 0 - <<< "${input}" || printf '%s\n' "${input}"
