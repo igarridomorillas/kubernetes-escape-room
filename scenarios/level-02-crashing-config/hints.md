@@ -30,34 +30,10 @@ In the `describe` output, look at:
   ```
 - Compare the names the application complains about with what the ConfigMap provides.
 
-## Hint 3: AI Copilot Prompt Recipe
-Use the **SRE Copilot Prompt Pattern** (Context + Symptom + kubectl output + Goal)
-with your favorite AI copilot (Gemini, ChatGPT, or Claude):
+## Hint 3: Time to Ask the Robot
+Plot twist: today the AI is actually useful. 🤖
 
-Copy and paste the following prompt into your AI copilot:
+Your pod crashes faster than you can read the logs. Run `make ai-assist`, paste the prompt into
+your AI agent and let it hunt for causes (plural, it can be greedy) while you refill your coffee.
 
-```text
-I am troubleshooting an incident in a Kubernetes cluster where a critical service keeps restarting.
-
-[Context]
-Namespace: escape-level-02
-Workload: Deployment order-processor (Python app), configuration from ConfigMap order-config
-Expected: Pod stays Running and Ready, and /healthz on port 8080 returns HTTP 200.
-
-[Symptom]
-Pod status flips between CrashLoopBackOff, Error and OOMKilled.
-
-[Container logs]
-<PASTE OUTPUT OF: kubectl logs -n escape-level-02 -l app=order-processor --tail=30>
-
-[kubectl describe output]
-<PASTE OUTPUT OF: kubectl describe pod -n escape-level-02 -l app=order-processor>
-
-[ConfigMap]
-<PASTE OUTPUT OF: kubectl get configmap order-config -n escape-level-02 -o yaml>
-
-[Question]
-1. List every distinct root cause you can see in this output (there may be more than one).
-2. For each one, explain the evidence that points to it.
-3. Provide the exact kubectl commands or YAML patches to fix them, and tell me the order to apply them in.
-```
+Check its homework, though: the AI proposes, the cluster decides.

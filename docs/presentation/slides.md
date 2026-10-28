@@ -505,8 +505,8 @@ layout: default
 </ul></div>
 <div class="card grow"><h4><carbon-idea /> Help ladder</h4>
 <ul class="small">
-  <li><code>ai-assist</code>: free, spoiler-free strategy tip</li>
-  <li><code>hint</code>: 1 concept → 2 commands → 3 AI prompt recipe</li>
+  <li><code>ai-assist</code>: free, spoiler-free prompt to paste into an AI agent</li>
+  <li><code>hint</code>: 1 concept → 2 commands → 3 a nudge to use <code>ai-assist</code></li>
 </ul></div>
 </div>
 

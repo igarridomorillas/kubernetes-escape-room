@@ -37,32 +37,10 @@ Read the exception message carefully:
   kubectl get events -n escape-level-04
   ```
 
-## Hint 3: AI Copilot Prompt Recipe
-Use the **SRE Copilot Prompt Pattern** (Context + Symptom + kubectl output + Goal)
-with your favorite AI copilot (Gemini, ChatGPT, or Claude).
+## Hint 3: Time to Ask the Robot
+Plot twist: today the AI is actually useful. 🤖
 
-Do **not** paste all 5,000 lines of logs—paste only the filtered stack trace together with the Deployment and ConfigMap manifests:
+Five thousand log lines is a lot of haystack for human eyes. Run `make ai-assist`, paste the prompt
+into your AI agent and let it find the needle while you pretend you knew where it was all along.
 
-```text
-I am troubleshooting intermittent HTTP 500 errors in a 3-tier Kubernetes checkout pipeline (gateway -> cart -> payment).
-
-[Context]
-Namespace: escape-level-04
-Workloads: Deployment gateway, Deployment cart, Deployment payment, ConfigMap payment-config
-Expected: POST /checkout on gateway returns HTTP 200 for all payment methods, including credit_card and coupon.
-
-[Symptom]
-All pods are Running 1/1 and standard card checkouts succeed, but coupon checkouts fail with HTTP 500.
-
-[Filtered error log from payment]
-<PASTE OUTPUT OF: kubectl logs -n escape-level-04 deployment/payment | grep -A 5 -E "ERROR|Exception">
-
-[payment Deployment env section & payment-config ConfigMap]
-<PASTE OUTPUT OF: kubectl get deployment payment -n escape-level-04 -o yaml>
-<PASTE OUTPUT OF: kubectl get configmap payment-config -n escape-level-04 -o yaml>
-
-[Goal]
-1. Explain why the exception occurs only for coupon checkouts while health checks and card payments pass.
-2. Quote the exact line in the stack trace and the exact manifest field that explain the root cause.
-3. Provide the minimal kubectl command or YAML patch to fix it and roll out the updated payment pod.
-```
+Check its homework, though: the AI proposes, the cluster decides.
