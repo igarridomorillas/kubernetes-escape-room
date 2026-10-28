@@ -20,7 +20,7 @@
 |---|---|
 | [`scenarios/*/hints.md`](../../scenarios/) | Hint 3 replaced by a short pointer to `make ai-assist` |
 | [`scenarios/*/ai-assist.md`](../../scenarios/) | Rewritten: manual evidence commands, a bad prompt, the paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt and a short "why" |
-| [`scripts/escape-room.sh`](../../scripts/escape-room.sh) | New `render_markdown`: pipes `incident.md`, hints and `ai-assist.md` through `glow` when installed, else `cat` |
+| [`scripts/escape-room.sh`](../../scripts/escape-room.sh) | New `render_markdown`: pipes `incident.md`, hints and `ai-assist.md` through `glow` when installed, else (or if glow fails) `cat`; `hint` repeats Hint 3 after the all-hints-used warning; refreshed `ai-assist` help text |
 | [`README.md`](../../README.md), [`docs/pre-workshop-checklist.md`](../pre-workshop-checklist.md) | `glow` listed as an optional prerequisite; `ai-assist` description and Tier 1 fallback updated |
 | [`docs/presentation/slides.md`](../presentation/slides.md), [`docs/design/plan.md`](../design/plan.md) | Help-ladder wording; Amendment 8 |
 | [`AGENTS.md`](../../AGENTS.md) | Harness behaviour for `render_markdown`, the optional-glow exception to rule 1, and a new `ai-assist.md` authoring rule |
@@ -36,8 +36,8 @@
 5. **A one-sentence TASK is enough if the rules carry the technique.** The numbered steps were dropped. The two rules that matter stay: "list every distinct root cause with confidence and what would disprove it" and "never apply a fix yourself, only propose it". This replaced "read-only first until I ask for a fix", which contradicted a TASK that proposes a fix.
 6. **"Read-only" is an instruction, not a guarantee.** Prompts forbid mutating commands, `make` targets and reading Secrets, but the MCP/CLI-agent restrictions in the pre-workshop checklist remain the real guardrail.
 7. **Bad prompts are terse on purpose** (`My payment-gateway pod is in ImagePullBackOff. Fix it.`). A realistic bad prompt is a symptom plus "fix it", not a long prompt with a subtle flaw.
-8. **`glow` is optional and zero-margin.** Its default style indents by 2 columns, indents code blocks further and pads every line with trailing spaces, so selected text does not paste back as written. A minimal embedded style (`margin: 0`, `-w 0`) fixes that. The harness never installs glow (rule 1 exception, documented in `AGENTS.md`).
-9. **Hint 3 is only a pointer.** The old Hint 3 prompt templates duplicated `ai-assist`, kept the paste-the-output placeholders and asked for fixes directly. Each level's Hint 3 is now a short, funny nudge to run `make ai-assist` (the heading must stay `## Hint 3` for `extract_hint`).
+8. **`glow` is optional and zero-margin.** Its default style indents by 2 columns, indents code blocks further and pads every line with trailing spaces, so selected text does not paste back as written. A minimal embedded style (`margin: 0`, `-w 0`) fixes that. The harness never installs glow (rule 1 exception, documented in `AGENTS.md`). Ordered lists also need an explicit `enumeration` prefix, otherwise the dot after the number is lost ("2Diagnose ..."). stdin is buffered so a failing glow falls back to the plain text instead of aborting the command under `set -e`.
+9. **Hint 3 is only a pointer.** The old Hint 3 prompt templates duplicated `ai-assist`, kept the paste-the-output placeholders and asked for fixes directly. Each level's Hint 3 is now a short, funny nudge to run `make ai-assist` (the heading must stay `## Hint 3` for `extract_hint`). Once all 3 hints are used, `hint` keeps its warning and shows Hint 3 again (without changing `HINT_LEVEL`), so the pointer to `ai-assist` is never lost.
 10. **Process lessons:** prompts avoid the section-sign symbol; a line-range edit that ends at the first `}` breaks a function containing a JSON heredoc, so edit such functions with exact string matches; commits carry no AI co-author trailer.
 
 ---
@@ -57,6 +57,8 @@ Not run (left unchecked below): the cluster flows, glow on screen in a real term
 
 - [ ] `make ai-assist` and `make hint` with glow: styled output, no indentation
 - [ ] Same commands without glow and with `NO_COLOR=1`: plain Markdown, no errors
+- [ ] After all 3 hints, `make hint` shows the warning and Hint 3 again
+- [ ] Incident alert after `make start`: numbered steps show as `1.`, `2.`, ...
 - [ ] Each level's prompt, pasted into an agent with `kubectl` access, runs only read-only commands and reaches the right diagnosis
 - [ ] `ai-assist` output is still spoiler-free on all four levels
 - [ ] Cheatsheet, `docs/ai-exercises.md` and the `ai-assist` examples are consistent
