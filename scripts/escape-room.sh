@@ -15,6 +15,7 @@ readonly SCRIPT_DIR
 readonly STATE_FILE="${SCRIPT_DIR}/.room-state"
 readonly KIND_CONFIG="${SCRIPT_DIR}/kind/cluster-config.yaml"
 readonly CILIUM_MANIFEST="${SCRIPT_DIR}/kind/cni/cilium.yaml"
+readonly PAGE_SOUND="${SCRIPT_DIR}/scripts/assets/incident-page.mp3"
 readonly KIND_KUBECONFIG="${SCRIPT_DIR}/kind/.kube/config"
 readonly SCENARIOS_DIR="${SCRIPT_DIR}/scenarios"
 readonly CLUSTER_NAME="escape-room"
@@ -129,6 +130,14 @@ next_level() {
     [[ "${candidate}" == "${current}" ]] && found=1
   done
   return 0
+}
+
+# Plays the incident page sound on macOS (afplay). Optional: silently skipped
+# when afplay is missing (e.g. Linux) or the asset is absent.
+play_page_sound() {
+  if command -v afplay > /dev/null 2>&1 && [[ -f "${PAGE_SOUND}" ]]; then
+    afplay "${PAGE_SOUND}" > /dev/null 2>&1 &
+  fi
 }
 
 print_next_steps() {
@@ -463,6 +472,7 @@ cmd_start() {
   # Show incident alert
   local incident_file="${dir}incident.md"
   if [[ -f "${incident_file}" ]]; then
+    play_page_sound
     echo ""
     echo -e "${RED}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${RED}${BOLD}  🚨  INCIDENT ALERT — READ CAREFULLY${NC}"
