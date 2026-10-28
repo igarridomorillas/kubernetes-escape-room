@@ -15,6 +15,7 @@ Ask attendees to install the three required tools and run `make prepare` **befor
 | **Docker Desktop** (or Docker Engine) | Running daemon (`>= 4 GB` RAM allocated) | `docker info` | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) (`brew install --cask docker`) |
 | **kind** (Kubernetes in Docker) | `>= 0.20.0` | `kind --version` | [kind.sigs.k8s.io](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (`brew install kind`) |
 | **kubectl** | `>= 1.28` | `kubectl version --client` | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) (`brew install kubectl`) |
+| **glow** *(optional)* | any | `glow --version` | [github.com/charmbracelet/glow](https://github.com/charmbracelet/glow) (`brew install glow`). Renders hints and AI tips; without it they show as plain Markdown |
 
 ### B. Pre-Flight Cluster & Image Warm-Up (Run Before Event)
 

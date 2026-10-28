@@ -468,7 +468,7 @@ cmd_start() {
     echo -e "${RED}${BOLD}  🚨  INCIDENT ALERT — READ CAREFULLY${NC}"
     echo -e "${RED}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
-    cat "${incident_file}"
+    render_markdown < "${incident_file}"
     echo ""
   fi
 
@@ -520,6 +520,34 @@ cmd_status() {
   echo ""
 }
 
+# ─── Markdown rendering (optional: glow) ──────────────────────────────────────
+
+# Renders Markdown from stdin with glow on a terminal; plain passthrough when
+# glow is not installed (optional), stdout is not a terminal, or NO_COLOR is set.
+# Uses a minimal style with no margin, indent or trailing padding, so text
+# selected in the terminal pastes back exactly as written.
+render_markdown() {
+  if [[ -t 1 && -z "${NO_COLOR:-}" ]] && command -v glow > /dev/null 2>&1; then
+    local style
+    style="$(mktemp)"
+    cat > "${style}" <<'JSON'
+{
+  "document": { "margin": 0 },
+  "heading": { "bold": true, "color": "39", "block_suffix": "\n" },
+  "strong": { "bold": true },
+  "code": { "color": "81" },
+  "block_quote": { "color": "244", "indent": 0 },
+  "code_block": { "color": "114", "margin": 0 },
+  "item": { "block_prefix": "• " }
+}
+JSON
+    glow -s "${style}" -w 0 -
+    rm -f "${style}"
+  else
+    cat
+  fi
+}
+
 # ─── Command: hint ────────────────────────────────────────────────────────────
 
 cmd_hint() {
@@ -562,7 +590,7 @@ cmd_hint() {
 
   # Extract the Nth hint block from hints.md using pure bash + awk
   # Hints are delimited by "## Hint N" headings
-  extract_hint "${hints_file}" "${next_hint}"
+  extract_hint "${hints_file}" "${next_hint}" | render_markdown
   echo ""
 }
 
@@ -608,7 +636,7 @@ cmd_ai_assist() {
   echo ""
   echo -e "${CYAN}${BOLD}🤖  AI assist — ${level}${NC}"
   echo ""
-  cat "${tip_file}"
+  render_markdown < "${tip_file}"
   echo ""
 }
 

@@ -20,6 +20,7 @@ A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to dia
 | `docker` | daemon running | `docker info` | [Docker Desktop](https://docs.docker.com/desktop/) (macOS) / [Docker Engine](https://docs.docker.com/engine/install/) (Linux) |
 | `kind` | `>= 0.20.0` | `kind --version` | [kind quick start](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) |
 | `kubectl` | `>= 1.28` | `kubectl version --client` | [Install tools](https://kubernetes.io/docs/tasks/tools/#kubectl) |
+| `glow` *(optional)* | any | `glow --version` | [glow](https://github.com/charmbracelet/glow#installation) (`brew install glow`). Renders hints and AI tips; without it they show as plain Markdown |
 
 ---
 
