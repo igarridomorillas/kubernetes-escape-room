@@ -77,7 +77,7 @@ kubernetes-escape-room/
 │   │   ├── solution/                # Reference fix manifests
 │   │   ├── incident.md              # Pager-style alert shown to attendees
 │   │   ├── hints.md                 # 3-tier progressive hints
-│   │   ├── ai-assist.md             # AI copilot tip (shown by `ai-assist`, no spoilers)
+│   │   ├── ai-assist.md             # Paste-ready AI agent prompt (shown by `ai-assist`, no spoilers)
 │   │   └── verify.sh                # Deterministic verification probe
 │   ├── level-02-crashing-config/
 │   │   ├── app/                     # Self-contained app source + Dockerfile (built by `start`)
@@ -119,7 +119,8 @@ kubernetes-escape-room/
     │   ├── 04-milestone-04.md       # Session 4 log: Level 03 — The Silent Wall
     │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
-    │   └── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
+    │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
+    │   └── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
@@ -320,6 +321,7 @@ exit 0
 - **`verify.sh` failures must be diagnosable:** distinguish an endpoint failure (`Failed` phase) from a probe-pod failure (could not create / did not finish: image pull or scheduling).
 - **Hints are progressive:** Hint 1 = concept, Hint 2 = investigation commands (`describe`, `logs`, `events`) **without** the fix, Hint 3 = AI prompt recipe. Never put the fix command or the correct value in Hints 1–2.
 - **`incident.md` describes symptoms only:** no root cause, no "last deploy" hints, and no endpoints/paths that the workload does not actually serve.
+- **`ai-assist.md` is an agent-ready prompt (learned from the ai-assist rewrite):** `docs/ai-prompts-cheatsheet.md` is the base technique; `ai-assist.md` only applies it. Structure: manual evidence commands, a terse bad prompt ending in "Fix it.", one paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt, a short "why". No placeholders: the agent gathers the evidence itself. ISSUE restates only the symptom from `incident.md` (no root cause, no fix). Level traps (logs alone, unfiltered logs, unsafe network shortcuts, invented image tags) go in RULES. Every prompt must forbid mutating commands, `make` targets and reading Secrets. Do not use the section-sign symbol or absolute paths.
 - **Executable scripts** must be `chmod 750`; re-check after editing with tools that reset modes.
 - **Images must be discoverable (learned from `prepare`):** write every image as a literal `image: <ref>`, `--image=<ref>` or Dockerfile `FROM <ref>`, never built from shell/template variables, so `prepare` finds and pre-pulls it. Never list images by hand in scripts or docs; add them to the scenario and let `discover_images` pick them up.
 - **Pull, don't `kind load` third-party images (learned from `prepare`):** with Docker's containerd image store, `kind load docker-image` fails on multi-arch images (`ctr: content digest ... not found`). Only locally built `escape-room/*` images are loaded; everything else is pulled by the node (or pre-pulled on the host). Do not silence stderr when debugging such failures.

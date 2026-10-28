@@ -56,7 +56,7 @@ Run the steps in this order. Every level needs a cluster first, so `make setup` 
 3. **Investigate and fix it** with `kubectl` and your AI copilot. While you work, you can use:
    - `make status`: active level and pod statuses.
    - `make hint`: next progressive hint (concept, then investigation commands, then an AI prompt recipe).
-   - `make ai-assist`: AI copilot tip for the level. It never spoils the fix and doesn't use up a hint.
+   - `make ai-assist`: a paste-ready prompt for an AI agent with `kubectl` access, plus a bad-prompt example and a follow-up prompt. It never spoils the fix and doesn't use up a hint.
 4. **Check your fix:** `make verify`. On success the level is marked completed and the next step is shown.
 5. **If you get stuck or want to retry:**
    - `make reset`: re-break the current level and try again.
@@ -143,7 +143,8 @@ kubernetes-escape-room/
     │   ├── 04-milestone-04.md       # Session 4: Level 03 — The Silent Wall
     │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
-    │   └── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
+    │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
+    │   └── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)

@@ -224,4 +224,4 @@ Run this deterministic smoke test from the repository root to verify the harness
 
 ### Fallback 5: MCP Server or CLI Agent Fails to Connect
 - **Symptom:** `npx kubernetes-mcp-server` or `opencode` errors out or lacks API credentials.
-- **Fix:** Switch immediately to **Tier 1 (Web Copilot)**. Every level's `make ai-assist` and `make hint` (Hint 3) are written for standard copy-paste chat assistants with zero loss of workshop functionality.
+- **Fix:** Switch immediately to **Tier 1 (Web Copilot)**. Every level's `make ai-assist` prompt works in a chat assistant too: run the commands under "Collect the evidence" yourself and paste their output under the prompt. `make hint` (Hint 3) is written for copy-paste chat assistants as is.
