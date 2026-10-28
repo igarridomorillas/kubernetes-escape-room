@@ -475,7 +475,7 @@ cmd_start() {
   echo -e "${BOLD}Useful commands:${NC}"
   echo -e "  ${CYAN}make status${NC}   — see pod states"
   echo -e "  ${CYAN}make hint${NC}     — get your first hint"
-  echo -e "  ${CYAN}make ai-assist${NC} — tips for using an AI copilot on this level"
+  echo -e "  ${CYAN}make ai-assist${NC} — paste-ready prompt for an AI agent on this level"
   echo -e "  ${CYAN}make verify${NC}   — check if you've fixed it"
   echo ""
 }
@@ -528,7 +528,9 @@ cmd_status() {
 # selected in the terminal pastes back exactly as written.
 render_markdown() {
   if [[ -t 1 && -z "${NO_COLOR:-}" ]] && command -v glow > /dev/null 2>&1; then
-    local style
+    # Buffer stdin so a failing glow can still fall back to the plain text.
+    local style input
+    input="$(cat)"
     style="$(mktemp)"
     cat > "${style}" <<'JSON'
 {
@@ -541,7 +543,7 @@ render_markdown() {
   "item": { "block_prefix": "• " }
 }
 JSON
-    glow -s "${style}" -w 0 -
+    glow -s "${style}" -w 0 - <<< "${input}" || printf '%s\n' "${input}"
     rm -f "${style}"
   else
     cat
@@ -578,6 +580,11 @@ cmd_hint() {
   if [[ "${hint_level}" -ge 3 ]]; then
     echo -e "${YELLOW}⚠  You've already used all 3 hints.${NC}"
     echo -e "  Use ${BOLD}make solve${NC} if you're truly stuck (instructor only)."
+    echo ""
+    echo -e "${YELLOW}${BOLD}💡  Hint 3 of 3 — ${level} (again)${NC}"
+    echo ""
+    extract_hint "${hints_file}" 3 | render_markdown
+    echo ""
     return
   fi
 
