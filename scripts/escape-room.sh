@@ -468,14 +468,14 @@ cmd_start() {
     echo -e "${RED}${BOLD}  🚨  INCIDENT ALERT — READ CAREFULLY${NC}"
     echo -e "${RED}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
-    cat "${incident_file}"
+    render_markdown < "${incident_file}"
     echo ""
   fi
 
   echo -e "${BOLD}Useful commands:${NC}"
   echo -e "  ${CYAN}make status${NC}   — see pod states"
   echo -e "  ${CYAN}make hint${NC}     — get your first hint"
-  echo -e "  ${CYAN}make ai-assist${NC} — tips for using an AI copilot on this level"
+  echo -e "  ${CYAN}make ai-assist${NC} — paste-ready prompt for an AI agent on this level"
   echo -e "  ${CYAN}make verify${NC}   — check if you've fixed it"
   echo ""
 }
@@ -520,6 +520,37 @@ cmd_status() {
   echo ""
 }
 
+# ─── Markdown rendering (optional: glow) ──────────────────────────────────────
+
+# Renders Markdown from stdin with glow on a terminal; plain passthrough when
+# glow is not installed (optional), stdout is not a terminal, or NO_COLOR is set.
+# Uses a minimal style with no margin, indent or trailing padding, so text
+# selected in the terminal pastes back exactly as written.
+render_markdown() {
+  if [[ -t 1 && -z "${NO_COLOR:-}" ]] && command -v glow > /dev/null 2>&1; then
+    # Buffer stdin so a failing glow can still fall back to the plain text.
+    local style input
+    input="$(cat)"
+    style="$(mktemp)"
+    cat > "${style}" <<'JSON'
+{
+  "document": { "margin": 0 },
+  "heading": { "bold": true, "color": "39", "block_suffix": "\n" },
+  "strong": { "bold": true },
+  "code": { "color": "81" },
+  "block_quote": { "color": "244", "indent": 0 },
+  "code_block": { "color": "114", "margin": 0 },
+  "item": { "block_prefix": "• " },
+  "enumeration": { "block_prefix": ". " }
+}
+JSON
+    glow -s "${style}" -w 0 - <<< "${input}" || printf '%s\n' "${input}"
+    rm -f "${style}"
+  else
+    cat
+  fi
+}
+
 # ─── Command: hint ────────────────────────────────────────────────────────────
 
 cmd_hint() {
@@ -550,6 +581,11 @@ cmd_hint() {
   if [[ "${hint_level}" -ge 3 ]]; then
     echo -e "${YELLOW}⚠  You've already used all 3 hints.${NC}"
     echo -e "  Use ${BOLD}make solve${NC} if you're truly stuck (instructor only)."
+    echo ""
+    echo -e "${YELLOW}${BOLD}💡  Hint 3 of 3 — ${level} (again)${NC}"
+    echo ""
+    extract_hint "${hints_file}" 3 | render_markdown
+    echo ""
     return
   fi
 
@@ -562,7 +598,7 @@ cmd_hint() {
 
   # Extract the Nth hint block from hints.md using pure bash + awk
   # Hints are delimited by "## Hint N" headings
-  extract_hint "${hints_file}" "${next_hint}"
+  extract_hint "${hints_file}" "${next_hint}" | render_markdown
   echo ""
 }
 
@@ -608,7 +644,7 @@ cmd_ai_assist() {
   echo ""
   echo -e "${CYAN}${BOLD}🤖  AI assist — ${level}${NC}"
   echo ""
-  cat "${tip_file}"
+  render_markdown < "${tip_file}"
   echo ""
 }
 

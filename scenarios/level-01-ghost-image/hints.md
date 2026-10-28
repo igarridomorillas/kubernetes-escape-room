@@ -25,28 +25,10 @@ Look closely at the **Events** section at the bottom of the output:
   ```
 - Compare that string with the tags actually published for the image on its registry.
 
-## Hint 3: AI Copilot Prompt Recipe
-Use the **SRE Copilot Prompt Pattern** (Context + Symptom + kubectl output + Goal)
-with your favorite AI copilot (Gemini, ChatGPT, or Claude):
+## Hint 3: Time to Ask the Robot
+Plot twist: today the AI is actually useful. 🤖
 
-Copy and paste the following prompt into your AI copilot:
+You've been staring at an image that refuses to be pulled. Run `make ai-assist`, paste the prompt
+into your AI agent and let it do the `kubectl` legwork while you sip your coffee.
 
-```text
-I am troubleshooting an incident in a Kubernetes cluster where a critical service is down.
-
-[Context]
-Namespace: escape-level-01
-Workload: Deployment payment-gateway
-Expected: Pod is Running and ready to serve HTTP traffic.
-
-[Symptom]
-Pod status shows ErrImagePull / ImagePullBackOff.
-
-[kubectl describe output]
-<PASTE OUTPUT OF: kubectl describe pod -n escape-level-01 -l app=payment-gateway>
-
-[Question]
-1. What is the root cause of the ImagePullBackOff error?
-2. What is a valid nginx alpine image tag to use?
-3. Provide the exact kubectl command or YAML patch to fix this deployment immediately.
-```
+Check its homework, though: the AI proposes, the cluster decides.
