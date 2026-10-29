@@ -283,7 +283,7 @@ layout: default
 <div class="grid-3">
   <div class="card"><h4><carbon-terminal /> What changes</h4><span class="small">You stop copy-pasting evidence. The agent runs its own read-only commands, reads the output and decides what to check next.</span></div>
   <div class="card warn"><h4><carbon-locked /> Permissions are the guardrail</h4><span class="small">Allow commands that read and inspect. Deny anything that creates, changes or deletes. Use credentials scoped to a non-prod environment.</span></div>
-  <div class="card good"><h4><carbon-user-follow /> How to use it</h4><span class="small">Start a CLI agent (for example <code>opencode</code>), paste the agent-ready prompt, approve each command, then verify the result yourself.</span></div>
+  <div class="card good"><h4><carbon-user-follow /> How to use it</h4><span class="small">Start a CLI agent (for example <code>opencode</code>) from a directory <b>outside this repo</b> so it can't read hints or solutions, paste the agent-ready prompt, approve each command, then verify the result yourself.</span></div>
 </div>
 
 </div>
@@ -372,6 +372,7 @@ layout: default
   <li>One namespace per level (<code>escape-level-01</code> … <code>03</code>)</li>
   <li>For your own <code>kubectl</code>: <code>export KUBECONFIG="$(pwd)/kind/.kube/config"</code> to target only the room</li>
   <li><code>verify</code> probes the service from inside the cluster</li>
+  <li>Using a CLI agent? Start it from a directory <b>outside this repo</b>, so it can't read hints or solutions</li>
   <li><b>Help ladder:</b> <code>hint</code> (concept, then commands, then a nudge to <code>ai-assist</code>), then <code>ai-assist</code> (free, spoiler-free prompt)</li>
 </ul></div>
 
@@ -584,6 +585,30 @@ layout: default
 
 <!--
 Not run on the build machine (see docs/ai-research-notes.md); check each project's docs before pointing attendees at them.
+-->
+
+---
+layout: default
+---
+
+<div class="kicker">Closing thought</div>
+
+# Keep training without AI
+
+<div class="body">
+
+<div class="grid-3">
+  <div class="card"><h4><carbon-user-activity /> Troubleshooting is a muscle</h4><span class="small">Reading events, logs and manifests by hand is a skill. Skills you stop using fade.</span></div>
+  <div class="card warn"><h4><carbon-view /> Hindsight makes it look easy</h4><span class="small">Once the root cause is known, the path to it looks obvious. It never is while the pager is going off.</span></div>
+  <div class="card good"><h4><carbon-user-follow /> Train on purpose</h4><span class="small">Practise incidents and game days with no AI, so you can still debug when the tool is wrong, down or not allowed.</span></div>
+</div>
+
+<div class="tip"><b>Like the gym:</b> AI is the equipment that helps you lift more, but you only stay strong by doing the reps yourself. Use it to go faster, not to stop knowing how.</div>
+
+</div>
+
+<!--
+Land the point before Q&A: AI is a copilot, not a replacement for the skill. Once we know the RCA everything seems simple, which is exactly why we must keep practising the manual investigation (kubectl describe, logs, events) without AI. Suggest a concrete habit: run a level again without AI, or schedule game days without it.
 -->
 
 ---

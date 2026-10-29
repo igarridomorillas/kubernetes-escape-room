@@ -80,7 +80,7 @@ version = "v1"
 kind = "Secret"
 ```
 
-`kubeconfig`, `KUBECONFIG` and `--config` must be absolute paths (MCP clients may start the server from another directory), so replace `<repo-root>` with the output of `pwd` run in the repository root. Register the server in your MCP client configuration:
+`kubeconfig`, `KUBECONFIG` and `--config` must be absolute paths (MCP clients may start the server from another directory), so replace `<repo-root>` with the output of `pwd` run in the repository root. Register the server in your MCP client configuration, and start the MCP client from a scratch directory outside the repository (not the repo root, which also holds the Slidev `.mcp.json`, `AGENTS.md`, hints and solutions):
 
 ```json
 {
@@ -96,7 +96,15 @@ kind = "Secret"
 
 ### Optional Tier 4 Setup: CLI Agent (`opencode`)
 
-To restrict `opencode` to read-only cluster inspection (and prevent it from running `make solve`), save `opencode.json` in the repository root (gitignored) and launch from the repository root with `KUBECONFIG="$(pwd)/kind/.kube/config" opencode`:
+To restrict `opencode` to read-only cluster inspection (and prevent it from running `make solve`), save `opencode.json` in a scratch directory **outside the repository** (for example `~/escape-room-agent`) and launch from there. Never start the agent in the repository root: it would read `AGENTS.md`, `hints.md` and `solution/` and spoil the investigation. From the repository root, pin the kubeconfig (absolute path) first, then change directory:
+
+```bash
+export KUBECONFIG="$(pwd)/kind/.kube/config"
+mkdir -p ~/escape-room-agent && cd ~/escape-room-agent
+opencode
+```
+
+`opencode.json`:
 
 ```json
 {
@@ -170,11 +178,11 @@ Run this deterministic smoke test from the repository root to verify the harness
 
 | Time | Segment | Facilitator Action |
 | :--- | :--- | :--- |
-| `00:00–10:00` | **Talk: incidents, then vs now, AI best practices & tooling** | Present Slides 2–14: incident lifecycle, 5-stage evidence loop, guardrails, tooling tiers (`k8sgpt`, MCP, CLI agents), sharing skills/MCP; Slide 15 for the harness |
-| `10:00–19:00` | **Level 01: The Ghost Image** | Attendees run `start level-01`. Compare vague prompt vs pasting `describe pod` Events (Slides 16–17) |
-| `19:00–33:00` | **Level 02: The Crashing Config** | Attendees run `start level-02`. Highlight compound faults: `KeyError` in logs + `OOMKilled` in `describe` (Slides 18–19) |
-| `33:00–50:00` | **Level 03: The Silent Wall** | Attendees run `start level-03`. Run the 5-min **Challenge the AI's Hypothesis** exercise (`504` vs `502`, ClusterIP vs Pod IP) (Slides 20–22) |
-| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `make cleanup` (Slides 23–24) |
+| `00:00–10:00` | **Talk: incidents, then vs now, AI best practices & tooling** | Present Slides 2–12: incident lifecycle, 5-stage evidence loop, guardrails, tooling tiers (CLI agents, MCP), sharing skills/MCP; Slide 13 for the harness |
+| `10:00–19:00` | **Level 01: The Ghost Image** | Attendees run `start level-01`. Brief with Slide 14; compare vague prompt vs pasting `describe pod` Events (Slide 7) |
+| `19:00–33:00` | **Level 02: The Crashing Config** | Attendees run `start level-02`. Highlight compound faults: `KeyError` in logs + `OOMKilled` in `describe` (Slide 15) |
+| `33:00–50:00` | **Level 03: The Silent Wall** | Attendees run `start level-03`. Run the 5-min **Challenge the AI's Hypothesis** exercise (`504` vs `502`, ClusterIP vs Pod IP; steps in [`ai-exercises.md`](ai-exercises.md), no slide) (Slide 16) |
+| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `make cleanup` (Slides 17–18); mention follow-up resources (Slide 19); close with the "Keep training without AI" slide (Slide 20) before Q&A (Slide 21) |
 | *Flex* | **Per-level targets** | Design targets are 8–10, 12–15 and 15–20 min (Levels 01–03). Fast rooms move on early; if you run long, skip the Level 03 exercise discussion rather than the debrief |
 | *Take-home* | **Level 04: Ghost Microservices** | Not presented in the deck. Fast finishers or attendees run `start level-04` (`5,000`-line log haystack + `grep -A 5 -E "ERROR\|Exception"`) |
 

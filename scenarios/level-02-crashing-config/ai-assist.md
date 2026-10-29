@@ -4,7 +4,7 @@
 
 > Worked example of the base technique in [`docs/ai-prompts-cheatsheet.md`](../../docs/ai-prompts-cheatsheet.md) (Context + Symptom + Raw output + Desired state). Here the agent collects the raw output itself. Applies: Stages 2 and 4 (Hypothesize, Verify), section 2 logs + describe, section 3 *Stopping at the First Error*.
 
-**How to use:** paste the prompt in section 3 as is into an AI agent that has `kubectl` access (for example a CLI agent or an MCP server). The prompt only describes the issue; the agent decides what to look at and gathers the evidence itself with read-only commands. If your AI has no shell access, run the section 1 commands yourself and paste their output under the prompt.
+**How to use:** paste the prompt in section 3 as is into an AI agent that has `kubectl` access (for example a CLI agent or an MCP server). Start a CLI agent from a scratch directory **outside this repository** (see the README), never from the repo root: otherwise it reads `AGENTS.md`, `hints.md` and `solution/` and the investigation is spoiled. The prompt only describes the issue; the agent decides what to look at and gathers the evidence itself with read-only commands. If your AI has no shell access, run the section 1 commands yourself and paste their output under the prompt.
 
 ### 1. Collect ALL three signal sources, read-only (manual fallback if your AI has no shell access)
 ```bash

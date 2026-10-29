@@ -57,12 +57,26 @@ Run the steps in this order. Every level needs a cluster first, so `make setup` 
    - `make status`: active level and pod statuses.
    - `make hint`: next progressive hint (concept, then investigation commands, then a nudge to run `make ai-assist`).
    - `make ai-assist`: a paste-ready prompt for an AI agent with `kubectl` access, plus a bad-prompt example and a follow-up prompt. It never spoils the fix and doesn't use up a hint.
+   - **Using a CLI agent?** Start it from a scratch directory **outside this repository** (see [Running a CLI agent](#running-a-cli-agent-outside-the-repo)).
 4. **Check your fix:** `make verify`. On success the level is marked completed and the next step is shown.
 5. **If you get stuck or want to retry:**
    - `make reset`: re-break the current level and try again.
    - `make solve`: apply the reference solution (instructor only).
 6. **Move on:** `make start LEVEL=level-02` (then `level-03`, `level-04`). Starting a level removes the other levels' namespaces, so only one scenario is live at a time.
 7. **Finish:** `make cleanup` tears down the cluster and removes the local state.
+
+#### Running a CLI agent (outside the repo)
+
+A CLI agent started in the repository root reads `AGENTS.md`, `hints.md`, `solution/` and `verify.sh`, which gives away the fix and defeats the exercise. Keep the repo for `make` and run the agent elsewhere, pointed at the cluster through an absolute `KUBECONFIG`:
+
+```bash
+# In the repository root: pin the cluster, then leave the repo
+export KUBECONFIG="$(pwd)/kind/.kube/config"
+mkdir -p ~/escape-room-agent && cd ~/escape-room-agent
+opencode   # or your CLI agent of choice, with its read-only config saved in this directory
+```
+
+Keep one terminal in the repo for `make` and a second one in the scratch directory for the agent.
 
 All levels run locally through `make` targets (the harness behind them is `scripts/escape-room.sh`):
 

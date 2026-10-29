@@ -263,8 +263,8 @@ and which resources do you still need to see?
 
 Only if the instructor has the tooling set up **outside** the harness. Do not assume attendees have it.
 
-1. From the repository root, export `KUBECONFIG="$(pwd)/kind/.kube/config"` before starting the assistant.
-2. Configure strict read-only access using the verified `mcp-config.toml` (`containers/kubernetes-mcp-server`) or `opencode.json` (`opencode`) snippets in [`ai-prompts-cheatsheet.md`](ai-prompts-cheatsheet.md) section 4 (remember: keep `v1/Secret` denied, but allow `v1/ConfigMap` so Level 02's `order-config` can be read).
+1. From the repository root, export `KUBECONFIG="$(pwd)/kind/.kube/config"`, then `cd` to a scratch directory **outside the repository** (for example `~/escape-room-agent`) before starting the assistant, so it cannot read `hints.md`, `solution/` or `AGENTS.md`.
+2. Configure strict read-only access using the verified `mcp-config.toml` (`containers/kubernetes-mcp-server`) or `opencode.json` (`opencode`) snippets in [`pre-workshop-checklist.md`](pre-workshop-checklist.md) (Tier 3 and Tier 4) (remember: keep `v1/Secret` denied, but allow `v1/ConfigMap` so Level 02's `order-config` can be read).
 3. Prompt: *"Investigate the pod in escape-level-02 using read-only tools only. Report every root cause with the command output that proves it. Do not change anything."*
 4. Compare with the copy-paste route: how many calls did it make (`pods_list` → `pods_get` → `pods_log` → `events_list` → `resources_get` on `ConfigMap/order-config`), did it inspect `LastState.Terminated` (`OOMKilled`), did it find both causes on the first pass, and did permission gates block any mutating call?
 
