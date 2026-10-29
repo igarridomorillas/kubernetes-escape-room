@@ -22,9 +22,16 @@ kubernetes-escape-room/
     └── presentation/
         ├── README.md                     # ← You are here
         ├── package.json                  # Slidev + playwright-chromium dependencies & scripts
-        ├── slides.md                     # Main presentation deck
-        ├── style.css                     # Shared theme (colors, cards, chips)
-        └── global-bottom.vue             # Slide number (<n>/<total>) on every slide but the cover
+        ├── slides.md                     # Main presentation deck (cover + shared content)
+        ├── style.css                     # Theme (colors, cards, chips)
+        ├── global-bottom.vue             # Slide number (<n>/<total>) on every slide but the cover
+        ├── shared/
+        │   └── workshop.md               # Slides and speaker notes shared by both decks
+        └── nexthink/                     # Nexthink meetup variant
+            ├── slides.md                 # Presenters + Nexthink intro, shared slides, hiring slide
+            ├── style.css                 # Halloween theme (cards, chips, PDF-safe overrides)
+            ├── global-bottom.vue         # Progress bar + slide numbers
+            └── public/                   # Hiring QR code
 ```
 
 ---
@@ -42,7 +49,15 @@ make slides
 
 # 3. Build and export deck to PDF (docs/presentation/slides-export.pdf)
 make slides-export
+
+# Nexthink meetup variant (Halloween theme, presenters, Nexthink and hiring slides)
+make slides-nexthink
+make slides-nexthink-export      # docs/presentation/slides-nexthink-export.pdf
 ```
+
+### Two decks, one content
+
+`slides.md` is the original workshop. `nexthink/slides.md` is the meetup variant: it adds the presenters, Nexthink and hiring slides and its own theme. Both pull the workshop slides and speaker notes from `shared/workshop.md` with `src:`, so edit shared slides there. Each entry directory carries its own `style.css`, `global-bottom.vue` and `public/`, because Slidev uses the entry's directory as its root.
 
 Once `make slides` is running, open:
 - **Presentation View:** `http://localhost:3030`

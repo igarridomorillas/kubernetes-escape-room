@@ -8,6 +8,9 @@ opencode.json
 node_modules/
 docs/presentation/dist/
 docs/presentation/.slidev/
+docs/presentation/nexthink/.slidev/
 docs/presentation/slides-export.pdf
+docs/presentation/slides-nexthink-export.pdf
+docs/presentation/nexthink/dist/
 .agents/skills/
 docs/presentation/package-lock.json

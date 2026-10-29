@@ -106,6 +106,8 @@ Run `make help` for the full target list, grouped into level-running and contrib
 make setup-dev          # install contributor deps (shellcheck, Slidev, Playwright Chromium, agent skills)
 make slides             # launch the live Slidev presentation (http://localhost:3030)
 make slides-export      # build and export the presentation deck to PDF
+make slides-nexthink    # Nexthink meetup variant (Halloween theme, presenters, Nexthink and hiring slides)
+make slides-nexthink-export  # export the Nexthink variant to PDF
 make validate           # run shellcheck + permission (750) + relative-path checks
 make test LEVEL=all     # run end-to-end smoke tests across all 4 levels (or LEVEL=level-01)
 ```
@@ -166,9 +168,16 @@ kubernetes-escape-room/
     ├── presentation/
     │   ├── README.md                # Slidev + MCP contributor guide
     │   ├── package.json             # Slidev dependencies & scripts
-    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── slides.md                # Workshop presentation deck (M6): cover + shared content
     │   ├── style.css                # Deck theme (colors, cards, chips)
-    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── shared/
+    │   │   └── workshop.md          # Slides and speaker notes shared by both decks
+    │   └── nexthink/                # Nexthink meetup variant (own entry, theme and assets)
+    │       ├── slides.md            # Presenters + Nexthink intro, shared slides, hiring slide
+    │       ├── style.css            # Halloween theme (also used by the PDF export)
+    │       ├── global-bottom.vue    # Progress bar + slide numbers
+    │       └── public/              # Hiring QR code
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1: Core harness & cluster setup
@@ -180,7 +189,8 @@ kubernetes-escape-room/
     │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
     │   ├── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
     │   ├── 09-kubeconfig-paths-make-help.md  # Session 9: Absolute KUBECONFIG paths & grouped make help
-    │   └── 10-k8s-plugin.md                  # Session 10: k8s-troubleshooting plugin
+    │   ├── 10-k8s-plugin.md                  # Session 10: k8s-troubleshooting plugin
+    │   └── 11-nexthink-slides.md             # Session 11: Nexthink meetup slides
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)

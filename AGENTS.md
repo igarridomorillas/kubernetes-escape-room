@@ -116,9 +116,16 @@ kubernetes-escape-room/
     ├── presentation/
     │   ├── README.md                # Contributor guide for Slidev & MCP setup
     │   ├── package.json             # Slidev dependencies & scripts
-    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── slides.md                # Workshop presentation deck (M6): cover + shared content
     │   ├── style.css                # Deck theme (colors, cards, chips)
-    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── shared/
+    │   │   └── workshop.md          # Slides and speaker notes shared by both decks
+    │   └── nexthink/                # Nexthink meetup variant (own entry, theme and assets)
+    │       ├── slides.md            # Presenters + Nexthink intro, shared slides, hiring slide
+    │       ├── style.css            # Halloween theme (also used by the PDF export)
+    │       ├── global-bottom.vue    # Progress bar + slide numbers
+    │       └── public/              # Hiring QR code
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
@@ -130,7 +137,8 @@ kubernetes-escape-room/
     │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
     │   ├── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
     │   ├── 09-kubeconfig-paths-make-help.md  # Session 9 log: Absolute KUBECONFIG paths & grouped make help
-    │   └── 10-k8s-plugin.md                  # Session 10 log: k8s-troubleshooting plugin
+    │   ├── 10-k8s-plugin.md                  # Session 10 log: k8s-troubleshooting plugin
+    │   └── 11-nexthink-slides.md             # Session 11 log: Nexthink meetup slides
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
@@ -208,6 +216,10 @@ make slides
 
 # Build and export the presentation to PDF (docs/presentation/slides-export.pdf)
 make slides-export
+
+# Nexthink meetup variant: same shared content with its own theme and extra slides
+make slides-nexthink
+make slides-nexthink-export   # docs/presentation/slides-nexthink-export.pdf
 ```
 
 ### Linting & shell script validation
@@ -357,11 +369,22 @@ exit 0
 
 ### Presentation & `Makefile` rules (learned from M6)
 
+- **Two decks, one content (`docs/presentation/`):** `slides.md` is the original workshop deck and `nexthink/slides.md` is the Nexthink meetup variant. Both import `shared/workshop.md` through `src:`, so edit shared slides and speaker notes there (keep notes free of absolute slide numbers). Each entry directory has its own `style.css`, `global-bottom.vue` and `public/` because Slidev uses the entry's directory as its root. Entry-specific slides (presenters, Nexthink, hiring) live only in the Nexthink entry.
 - **Subdirectory isolation (`docs/presentation/`):** Keep Slidev's `package.json` and `slides.md` (the generated `package-lock.json` is gitignored) inside `docs/presentation/` so the repository root remains free of Node.js runtime dependencies for attendees running `./scripts/escape-room.sh`.
 - **`npx` MCP binary resolution (`--prefix docs/presentation`):** On npm, the Slidev CLI package is `@slidev/cli` (which installs the local `slidev` binary into `docs/presentation/node_modules/.bin/slidev`); there is no standalone `slidev` package on the npm registry. Consequently, any MCP configuration or command executed from the repository root **must** pass `--prefix docs/presentation` (`npx --prefix docs/presentation slidev mcp docs/presentation/slides.md`).
-- **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing and builds the deck (`slidev build`) before exporting.
+- **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing, re-runs the idempotent `playwright install chromium` (so a missing browser binary is fixed too) and builds the deck (`slidev build`) before exporting; `make slides-nexthink-export` does the same for the Nexthink deck.
 - **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets. `make help` groups targets with `##@ <section>` markers ("Build & dev (contributors)" and "Run the levels (attendees)"); keep each section contiguous in the file and tag every new target with `## description`.
 - **Absolute `KUBECONFIG` (learned from session 09):** docs, slides and prompts always use `KUBECONFIG="$(pwd)/kind/.kube/config"` from the repository root, never `kind/.kube/config`. Config files that cannot expand shell (`mcp-config.toml`, MCP client JSON) use a `<repo-root>` placeholder with a note to fill it from `pwd`.
+
+### Slide rules (learned from session 11)
+
+- **Two entries, one content.** Edit shared slides and notes in `docs/presentation/shared/workshop.md`; entry-only slides (presenters, Nexthink, hiring) go in `docs/presentation/nexthink/slides.md`. Slidev reads `style.css`, `global-bottom.vue` and `public/` from the entry's directory, so each deck keeps its own.
+- **No absolute slide numbers in shared notes.** The two decks number slides differently; put entry-specific timing in each cover note.
+- **Keep the PDF export clean.** `slidev export` prints `/print`: glows (`text-shadow`, `box-shadow`), `mask-image` and `filter` print as solid blocks, and anything teleported or fixed repeats on every page and adds a blank one. Guard such elements with `location.pathname.includes('/print')` and neutralise the effects under `html.print`. After theme changes, export both decks and check the page count (21 and 24).
+- **Progress bar.** Teleport it to `body` with `position: fixed` so letterboxing and small windows cannot hide or shrink it, and hide it in the presenter view (`isPresenter`), which has its own bars.
+- **Respect `prefers-reduced-motion` only for flashing effects.** Hiding decorations for it made them look broken on a Mac with Reduce Motion on.
+- **Keep decorations minimal.** Colours, glowing titles, cobweb, moon, the pumpkin on the first and last slide and the bar. Fog, bats and ghosts were tried and removed.
+- **Speaker notes carry instructor-only facts** (root causes, traps, safety checks): update them together with `docs/ai-exercises.md`, `hints.md` and `solution/`.
 
 ### Plugin rules (learned from session 10)
 
@@ -399,7 +422,7 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
 ### Commit hygiene
 
 11. **Never commit without explicit instruction from the repo owner.** Make all file changes, then stop and wait to be told to commit.
-12. **No co-author attribution.** Do not add `Co-authored-by` or any agent/AI trailer lines to commit messages.
+12. **No co-author attribution.** Do not add `Co-authored-by` or any agent/AI trailer lines to commit messages, and no "Generated with" footer in PR descriptions.
 13. Commit message prefixes are limited to three types:
     ```
     feat: add broken manifests for ghost image scenario
@@ -451,6 +474,8 @@ node_modules/
 docs/presentation/dist/
 docs/presentation/.slidev/
 docs/presentation/slides-export.pdf
+docs/presentation/slides-nexthink-export.pdf
+docs/presentation/nexthink/dist/
 docs/presentation/package-lock.json
 .agents/skills/
 ```

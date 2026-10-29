@@ -269,3 +269,10 @@ COMPLETED_LEVELS=
 - **Hint 3 becomes a pointer:** the Hint 3 prompt templates (with `<PASTE ...>` placeholders) duplicated `ai-assist` and asked for fixes directly, contradicting the agent-ready prompts. Hint 3 on every level is now a short, light-hearted nudge to run `make ai-assist`, with no prompt text and no level-specific facts. `extract_hint` still matches on the `## Hint 3` heading.
 - **`hint` after all hints are used:** the "already used all 3 hints" warning is kept and Hint 3 is shown again (without changing `HINT_LEVEL`), so the pointer to `make ai-assist` stays visible.
 - **`render_markdown` robustness:** stdin is buffered so a failing `glow` falls back to the plain text, and the embedded style defines `enumeration` so numbered lists keep their dot.
+
+### Amendment 9 — Nexthink meetup variant of the deck
+*Flagged for human review (rule 10).*
+
+- **Two decks, one content:** the original workshop deck stays in `docs/presentation/slides.md`; a Nexthink variant lives in `docs/presentation/nexthink/` (presenters, Nexthink and hiring slides, Halloween theme, progress bar). Both import the workshop slides and speaker notes from `docs/presentation/shared/workshop.md` through Slidev `src:`. Slidev uses the entry directory as its root, so each deck has its own `style.css`, `global-bottom.vue` and `public/`.
+- **Commands:** `make slides-nexthink` and `make slides-nexthink-export` (output `docs/presentation/slides-nexthink-export.pdf`, gitignored).
+- **Speaker notes rewritten** with timing cues, doc pointers and per-level instructor notes. Details and learnings: [`docs/sessions/11-nexthink-slides.md`](../sessions/11-nexthink-slides.md).
