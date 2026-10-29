@@ -25,6 +25,7 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (~55 
    - Pure POSIX Bash only (`#!/usr/bin/env bash`).
    - Allowed: `curl`, `awk`, `sed`, `grep`, `kubectl`, `kind`, `docker`.
    - **Forbidden:** `jq`, `python`, `ruby`, `yq`, or any package-manager-installed tool.
+   - **PowerShell port (Windows):** the same rule applies to `scripts/escape-room.ps1`, the harness targets of `scripts/make.ps1` and all `verify.ps1` scripts. They must run on Windows PowerShell 5.1 and PowerShell 7+ with built-in cmdlets only; besides `kubectl`, `kind`, `docker` and the optional `glow`, only the Windows built-in `icacls` is allowed.
 
 2. **Namespaces are sacred.** Each level owns exactly one namespace:
    - Level 01 → `escape-level-01`
@@ -33,7 +34,7 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (~55 
    - Level 04 → `escape-level-04`
    - Never cross-contaminate resources between namespaces.
 
-3. **`verify.sh` is the contract.** Every scenario's `verify.sh` must:
+3. **`verify.sh` is the contract.** Every scenario's `verify.sh` and its PowerShell twin `verify.ps1` must:
    - Exit `0` on success, `1` on failure — no other exit codes.
    - Be **idempotent** — safe to run multiple times without side effects.
    - Run **in-cluster** using ephemeral probe pods (`curlimages/curl` or `kubectl exec`).
@@ -45,7 +46,7 @@ This is a **Kubernetes Escape Room** — a hands-on collaborative workshop (~55 
 
 6. **No absolute or user home paths** in any file. Never commit or write `/Users/<name>`, `/home/<name>`, or machine-specific paths into scripts, manifests, markdown docs, prompts, or links. Always use relative repository paths or environment-agnostic variables.
 
-7. **Script placement and permissions.** CLI tools and automation scripts must live under `scripts/` (no root wrappers or root aliases). Executable scripts must be set to `chmod 750` (`-rwxr-x---`).
+7. **Script placement and permissions.** CLI tools and automation scripts must live under `scripts/` (no root wrappers or root aliases). Executable scripts must be set to `chmod 750` (`-rwxr-x---`). PowerShell scripts (`.ps1`) need no executable bit but must be saved as UTF-8 **with BOM**: Windows PowerShell 5.1 reads BOM-less files as ANSI and garbles their emoji and box-drawing characters.
 
 ---
 
@@ -64,7 +65,10 @@ kubernetes-escape-room/
 │   └── plugins/
 │       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
-│   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   ├── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   ├── escape-room.ps1              # PowerShell port of the harness for Windows (UTF-8 with BOM)
+│   ├── make.ps1                     # PowerShell counterpart of the Makefile (same targets)
+│   └── PSScriptAnalyzerSettings.psd1 # Lint settings for the PowerShell scripts
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
 │   ├── cluster-config.yaml          # Kind cluster definition (disableDefaultCNI)
@@ -78,7 +82,8 @@ kubernetes-escape-room/
 │   │   ├── incident.md              # Pager-style alert shown to attendees
 │   │   ├── hints.md                 # 3-tier progressive hints
 │   │   ├── ai-assist.md             # Paste-ready AI agent prompt (shown by `ai-assist`, no spoilers)
-│   │   └── verify.sh                # Deterministic verification probe
+│   │   ├── verify.sh                # Deterministic verification probe
+│   │   └── verify.ps1               # PowerShell twin of verify.sh (same checks and messages)
 │   ├── level-02-crashing-config/
 │   │   ├── app/                     # Self-contained app source + Dockerfile (built by `start`)
 │   │   ├── broken/
@@ -86,14 +91,16 @@ kubernetes-escape-room/
 │   │   ├── incident.md
 │   │   ├── hints.md
 │   │   ├── ai-assist.md
-│   │   └── verify.sh
+│   │   ├── verify.sh
+│   │   └── verify.ps1
 │   ├── level-03-silent-wall/
 │   │   ├── broken/
 │   │   ├── solution/
 │   │   ├── incident.md
 │   │   ├── hints.md
 │   │   ├── ai-assist.md
-│   │   └── verify.sh
+│   │   ├── verify.sh
+│   │   └── verify.ps1
 │   └── level-04-ghost-microservices/  # Optional bonus
 │       ├── app/                     # Self-contained 3-tier app + Dockerfile (built by `start`)
 │       ├── broken/
@@ -101,7 +108,8 @@ kubernetes-escape-room/
 │       ├── incident.md
 │       ├── hints.md
 │       ├── ai-assist.md
-│       └── verify.sh
+│       ├── verify.sh
+│       └── verify.ps1
 └── docs/
     ├── design/
     │   └── plan.md                  # Architecture & implementation plan
@@ -120,7 +128,8 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   └── 09-powershell-port.md    # Session 9 log: PowerShell port for Windows
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
@@ -206,8 +215,8 @@ make slides-export
 make validate
 
 # Individual validation targets
-make lint          # shellcheck scripts/escape-room.sh scenarios/*/verify.sh
-make check         # enforce chmod 750 (git only tracks 755, so it re-applies 750) and no hardcoded /Users/ or /home/ paths
+make lint          # shellcheck scripts/escape-room.sh scenarios/*/verify.sh (+ PSScriptAnalyzer on the .ps1 scripts when pwsh is installed)
+make check         # enforce chmod 750 (git only tracks 755, so it re-applies 750), a UTF-8 BOM on .ps1 files and no hardcoded user home paths
 ```
 
 ### Smoke-testing a scenario
@@ -223,6 +232,23 @@ make solve
 make verify    # Expected: exits 0 (escaped)
 make reset
 make verify    # Expected: exits 1 (re-broken)
+```
+
+### Windows (PowerShell)
+
+Windows contributors and attendees use the PowerShell port: replace `make` with `.\scripts\make.ps1` (same targets; `LEVEL=level-02`, `-Level level-02` or a bare `level-02`). It runs on Windows PowerShell 5.1 and PowerShell 7+.
+
+```powershell
+# Only if Windows blocks running scripts (this terminal only)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+.\scripts\make.ps1 help
+.\scripts\make.ps1 prepare
+.\scripts\make.ps1 start LEVEL=level-01
+.\scripts\make.ps1 verify
+.\scripts\make.ps1 setup-dev          # PSScriptAnalyzer, shellcheck (winget), Slidev, Playwright, agent skills
+.\scripts\make.ps1 validate           # PSScriptAnalyzer (+ shellcheck if installed), git executable bits, BOM, home paths
+.\scripts\make.ps1 test LEVEL=all     # same smoke test as make test
 ```
 
 ---
@@ -243,6 +269,16 @@ make verify    # Expected: exits 1 (re-broken)
   ```
 - Wrap long pipelines in functions with descriptive names.
 - No inline `awk` programs longer than 3 lines — extract into a named function.
+
+### PowerShell scripts
+
+- Every `.ps1` file starts with `#Requires -Version 5.1` and sets `Set-StrictMode -Version 3.0`. Save it as UTF-8 **with BOM** (`make check` and `.\scripts\make.ps1 check` enforce it); editors and tools that strip the BOM break Windows PowerShell 5.1.
+- Code must run on Windows PowerShell 5.1 and PowerShell 7+: no `` `e `` escape (use `[char]27`), ternary, `??`, `&&`/`||` chains or `-Parallel`, and use `[Environment]::OSVersion.Platform` instead of `$IsWindows`. PSScriptAnalyzer's `PSUseCompatibleSyntax` rule (`scripts/PSScriptAnalyzerSettings.psd1`) checks this.
+- Harness and `make.ps1`: `$ErrorActionPreference = 'Stop'`, and every native command goes through `Invoke-Native`, `Test-Native` or `Get-NativeOutput`. They relax the preference locally (5.1 turns redirected native stderr into a terminating error) and treat a missing program as exit code 127, as Bash does.
+- `verify.ps1`: `$ErrorActionPreference = 'Continue'`, check `$LASTEXITCODE` after every native command, and delete the probe pod and restore `KUBECONFIG` in a `finally` block (the `trap ... EXIT` equivalent).
+- Never put double quotes inside native command arguments, because 5.1 strips them. Use quote-free jsonpath, or send a manifest on stdin (`$manifest | kubectl create -f -`) with LF line endings.
+- Use approved verbs (Windows PowerShell 5.1 has no `Build` or `Deploy`) and singular nouns. `Write-Host` is the right call for user-facing output. Run `.\scripts\make.ps1 lint` (or `make lint` with `pwsh` installed) after every change.
+- Keep messages, emoji, colours and banners identical to the Bash twin; only `make <target>` becomes `.\scripts\make.ps1 <target>`.
 
 ### Terminal formatting & ASCII art
 
@@ -321,7 +357,7 @@ exit 0
 - **`verify.sh` failures must be diagnosable:** distinguish an endpoint failure (`Failed` phase) from a probe-pod failure (could not create / did not finish: image pull or scheduling).
 - **Hints are progressive:** Hint 1 = concept, Hint 2 = investigation commands (`describe`, `logs`, `events`) **without** the fix, Hint 3 = a short, light-hearted pointer to `make ai-assist` (no prompt text, no level facts). Never put the fix command or the correct value in Hints 1–2.
 - **`incident.md` describes symptoms only:** no root cause, no "last deploy" hints, and no endpoints/paths that the workload does not actually serve.
-- **`ai-assist.md` is an agent-ready prompt (learned from the ai-assist rewrite):** `docs/ai-prompts-cheatsheet.md` is the base technique; `ai-assist.md` only applies it. Structure: manual evidence commands, a terse bad prompt ending in "Fix it.", one paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt, a short "why". No placeholders: the agent gathers the evidence itself. ISSUE restates only the symptom from `incident.md` (no root cause, no fix). Level traps (logs alone, unfiltered logs, unsafe network shortcuts, invented image tags) go in RULES. Every prompt must forbid mutating commands, `make` targets and reading Secrets. Do not use the section-sign symbol or absolute paths.
+- **`ai-assist.md` is an agent-ready prompt (learned from the ai-assist rewrite):** `docs/ai-prompts-cheatsheet.md` is the base technique; `ai-assist.md` only applies it. Structure: manual evidence commands, a terse bad prompt ending in "Fix it.", one paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt, a short "why". No placeholders: the agent gathers the evidence itself. ISSUE restates only the symptom from `incident.md` (no root cause, no fix). Level traps (logs alone, unfiltered logs, unsafe network shortcuts, invented image tags) go in RULES. Every prompt must forbid mutating commands, `make` targets and scripts under `scripts/` (Windows attendees run `.\scripts\make.ps1`), and reading Secrets. Do not use the section-sign symbol or absolute paths.
 - **Executable scripts** must be `chmod 750`; re-check after editing with tools that reset modes.
 - **Images must be discoverable (learned from `prepare`):** write every image as a literal `image: <ref>`, `--image=<ref>` or Dockerfile `FROM <ref>`, never built from shell/template variables, so `prepare` finds and pre-pulls it. Never list images by hand in scripts or docs; add them to the scenario and let `discover_images` pick them up.
 - **Pull, don't `kind load` third-party images (learned from `prepare`):** with Docker's containerd image store, `kind load docker-image` fails on multi-arch images (`ctr: content digest ... not found`). Only locally built `escape-room/*` images are loaded; everything else is pulled by the node (or pre-pulled on the host). Do not silence stderr when debugging such failures.
@@ -342,6 +378,7 @@ exit 0
 - `hint` advances `HINT_LEVEL` from 1 to 3. Once all 3 are used it prints the "already used all 3 hints" warning (with the `make solve` note) and shows Hint 3 again, without changing `HINT_LEVEL`.
 - `render_markdown` (stdin → stdout) pipes `incident.md`, hints and `ai-assist.md` through `glow` (minimal zero-margin, zero-padding style embedded in the function, `-w 0`, so selected text pastes back exactly) when stdout is a terminal, `NO_COLOR` is unset and `glow` is installed; otherwise (or if glow itself fails) it is plain `cat`. `glow` is an optional prerequisite (listed as optional in `README.md` and `docs/pre-workshop-checklist.md`); the harness never installs it and never requires it.
 - Levels are switched with `start <level>` only; there is intentionally no `next` command.
+- **PowerShell port (`scripts/escape-room.ps1`, `scripts/make.ps1`):** mirrors every command above with the same messages, state file (`.room-state`, LF line endings) and repo kubeconfig, and runs the level's `verify.ps1` in the same session (exit code `0`/`1`). Differences: it restores `KUBECONFIG` and the console encoding on exit, because it runs in the caller's session; it restricts `kind/.kube/` with `icacls` on Windows (`chmod` elsewhere) and only warns if that fails; it prints the `make <target>` references in `incident.md`, `hints.md` and `ai-assist.md` as `.\scripts\make.ps1 <target>`; and `make.ps1` accepts `LEVEL=<level>`, `-Level <level>` or a bare level. Any change to the harness, the `Makefile` or a `verify.sh` must be mirrored in its twin.
 
 ### Presentation & `Makefile` rules (learned from M6)
 
@@ -365,14 +402,14 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
 ### When implementing
 
 4. Implement **one milestone at a time** unless explicitly instructed otherwise.
-5. After every file created, run `shellcheck` on any `.sh` file. Fix all `SC*` warnings before proceeding.
+5. After every file created, run `shellcheck` on any `.sh` file. Fix all `SC*` warnings before proceeding. Run PSScriptAnalyzer (`.\scripts\make.ps1 lint`, or `make lint` with `pwsh` installed) on any `.ps1` file and fix every finding.
 6. After applying broken manifests, validate the failure mode with `kubectl get pods -n <namespace>` before moving on.
 7. After applying solution manifests, run `make verify` and confirm exit code `0`.
 
 ### When making changes
 
-8. **Never modify `scripts/escape-room.sh` without also updating the corresponding section in this `AGENTS.md`.**
-9. **Never modify a `verify.sh` to make it pass without fixing the underlying scenario bug.**
+8. **Never modify `scripts/escape-room.sh` without also updating the corresponding section in this `AGENTS.md`.** The same goes for the PowerShell twins: a change to `escape-room.sh`, the `Makefile` or a `verify.sh` must be mirrored in `escape-room.ps1`, `make.ps1` or that level's `verify.ps1`, and the other way round.
+9. **Never modify a `verify.sh` or `verify.ps1` to make it pass without fixing the underlying scenario bug.**
 10. If a design decision must change (e.g., a base image is unavailable), document it in [`docs/design/plan.md`](docs/design/plan.md) under a new "Amendment" section and flag it for human review.
 
 ### Commit hygiene

@@ -10,6 +10,7 @@
 ### D1: Automation Harness Dependency Policy
 - **Contract:** Pure POSIX Bash (`#!/usr/bin/env bash`). Zero external runtime dependencies beyond standard macOS/Linux utilities (`curl`, `awk`, `sed`, `grep`).
 - **No `jq` or Python requirement** for the core runner to avoid local attendee environment failures.
+- **Windows:** a PowerShell port of the harness follows the same contract with built-in cmdlets only (see Amendment 9).
 - Cluster state tracked via a local plain-text file `.room-state` containing `CURRENT_LEVEL`, `HINT_LEVEL`, and `COMPLETED_LEVELS`.
 
 ### D2: Multi-Tenancy & Namespace Isolation
@@ -269,3 +270,23 @@ COMPLETED_LEVELS=
 - **Hint 3 becomes a pointer:** the Hint 3 prompt templates (with `<PASTE ...>` placeholders) duplicated `ai-assist` and asked for fixes directly, contradicting the agent-ready prompts. Hint 3 on every level is now a short, light-hearted nudge to run `make ai-assist`, with no prompt text and no level-specific facts. `extract_hint` still matches on the `## Hint 3` heading.
 - **`hint` after all hints are used:** the "already used all 3 hints" warning is kept and Hint 3 is shown again (without changing `HINT_LEVEL`), so the pointer to `make ai-assist` stays visible.
 - **`render_markdown` robustness:** stdin is buffered so a failing `glow` falls back to the plain text, and the embedded style defines `enumeration` so numbered lists keep their dot.
+
+### Amendment 9 — PowerShell port for Windows attendees
+
+*Flagged for human review (rule 10).*
+
+- **Problem:** the harness needs Bash and `make`, so Windows attendees needed WSL2 or Git Bash plus a `make` install, and the README listed Windows as unsupported.
+- **Decision:** add a PowerShell port next to the Bash scripts instead of replacing them. `scripts/escape-room.ps1` ports `scripts/escape-room.sh`, `scripts/make.ps1` ports the `Makefile` (same targets, `LEVEL=level-02` or `-Level level-02`), and every level gets a `verify.ps1` twin of its `verify.sh`. macOS and Linux keep Bash and `make` unchanged. Both harnesses share `.room-state` (same keys, LF line endings), `kind/.kube/config` and `scenarios/`.
+- **Dependency policy (D1) for PowerShell:** Windows PowerShell 5.1 (built into Windows 10/11) or PowerShell 7+, built-in cmdlets only. External tools are the same as for Bash (`kubectl`, `kind`, `docker`, optional `glow`), plus the Windows built-in `icacls`. PSScriptAnalyzer is a contributor tool for `lint`, never a runtime dependency.
+- **Windows PowerShell 5.1 constraints that shaped the code:**
+  - Scripts without a BOM are read as ANSI, so every `.ps1` file is saved as UTF-8 with BOM (enforced by `check` in both `Makefile` and `make.ps1`).
+  - Redirected stderr of a native command becomes a terminating error under `$ErrorActionPreference = 'Stop'`, so the harness wraps native calls in helpers (`Invoke-Native`, `Test-Native`, `Get-NativeOutput`) that relax the preference locally and use the exit code. `verify.ps1` scripts use `'Continue'` and check `$LASTEXITCODE` after every command.
+  - Embedded double quotes in native arguments are stripped. Level 02's restart-count jsonpath is space-separated instead of using `{"\n"}`, and level 04 sends its probe pod as a manifest on stdin (the same `sh` script, in a YAML block scalar, with small resource requests/limits) instead of `kubectl run ... sh -c "<script>"`.
+- **Behaviour differences, all deliberate:**
+  - PowerShell scripts run in the caller's session, so the harness restores `KUBECONFIG` (and the console encoding) when it exits, and `verify.ps1` restores `KUBECONFIG` too. The user's own `kubectl` context is never changed, as with Bash.
+  - The repo kubeconfig is restricted with `icacls` (one full-control entry for the current user) instead of `chmod 700/600`. A failure is a warning, not an abort.
+  - `incident.md`, `hints.md` and `ai-assist.md` are shared. The PowerShell harness rewrites `make <target>` in them to `.\scripts\make.ps1 <target>` when printing, so the Markdown files need no Windows copy.
+  - Probe pod names include a random suffix (`verify-probe-<pid>-<n>`), because `$PID` is the same for every `verify.ps1` run in one PowerShell session.
+- **Guardrail update:** the `ai-assist.md` prompts now forbid "any make target or script under scripts/", since an agent on Windows would otherwise not read `.\scripts\make.ps1 solve` as a make target. The opencode example in the pre-workshop checklist denies the PowerShell `solve` forms too.
+- **Cost:** every harness, `Makefile` or `verify.sh` change now has to be made twice. `AGENTS.md` makes the twins a rule, `make lint` runs PSScriptAnalyzer when `pwsh` is installed, and the analyzer's `PSUseCompatibleSyntax` rule keeps the code 5.1-compatible.
+- **Alternatives considered:** documenting WSL2 or Git Bash plus `make` for Windows (one implementation, but more setup and path-conversion pitfalls on attendee laptops), and replacing Bash with PowerShell everywhere (would force macOS/Linux attendees to install `pwsh`).

@@ -28,7 +28,7 @@ AI as a copilot, not an autopilot.
 </div>
 
 <!--
-Welcome attendees! Confirm everyone has cloned the repo and run `make setup`.
+Welcome attendees! Confirm everyone has cloned the repo and run `make setup` (Windows: `.\scripts\make.ps1 setup`).
 Timing: talk (slides 2-14) ~10 min, hands-on (15-22) ~40 min, debrief (23-24) ~5 min.
 -->
 
@@ -530,6 +530,7 @@ make reset
 
 <!--
 Emphasize ai-assist is free and gives no spoilers: use it at the start of every level.
+Windows attendees run the same targets with `.\scripts\make.ps1` instead of `make` (e.g. `.\scripts\make.ps1 start LEVEL=level-01`).
 -->
 
 ---

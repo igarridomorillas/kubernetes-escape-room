@@ -6,6 +6,7 @@
 
 SHELL := bash
 HARNESS := ./scripts/escape-room.sh
+PS_MAKE := scripts/make.ps1
 SLIDES_DIR := docs/presentation
 LEVEL ?= level-01
 ALL_LEVELS := level-01 level-02 level-03 level-04
@@ -19,7 +20,7 @@ help: ## Show this help menu
 
 # ─── Contributor & Presentation Setup ─────────────────────────────────────────
 
-setup-dev: ## Install contributor/dev requirements (shellcheck, Slidev, Playwright & agent skills)
+setup-dev: ## Install contributor/dev requirements (shellcheck, PSScriptAnalyzer if pwsh exists, Slidev, Playwright & agent skills)
 	@if ! command -v shellcheck >/dev/null 2>&1; then \
 		if command -v brew >/dev/null 2>&1; then \
 			echo "→ Installing shellcheck via Homebrew..."; \
@@ -29,6 +30,12 @@ setup-dev: ## Install contributor/dev requirements (shellcheck, Slidev, Playwrig
 		fi; \
 	else \
 		echo "✓ shellcheck is installed."; \
+	fi
+	@if command -v pwsh >/dev/null 2>&1; then \
+		pwsh -NoProfile -Command 'if (Get-Module -ListAvailable PSScriptAnalyzer) { "✓ PSScriptAnalyzer is installed." } else { "→ Installing PSScriptAnalyzer (current user)..."; Install-Module PSScriptAnalyzer -Scope CurrentUser -Force }' \
+			|| echo "⚠ Could not install PSScriptAnalyzer; run 'Install-Module PSScriptAnalyzer -Scope CurrentUser' in pwsh."; \
+	else \
+		echo "⚠ pwsh not found; skipping PSScriptAnalyzer (only needed to lint the PowerShell port)."; \
 	fi
 	@echo "→ Installing Slidev dependencies in $(SLIDES_DIR)..."
 	npm --prefix $(SLIDES_DIR) install
@@ -48,10 +55,15 @@ slides-export: ## Build and export presentation slides to PDF
 
 # ─── Validation & Linting ─────────────────────────────────────────────────────
 
-lint: ## Run shellcheck on escape-room.sh and all scenario verify.sh scripts
+lint: ## Run shellcheck on the Bash scripts, and PSScriptAnalyzer on the PowerShell port when pwsh is installed
 	shellcheck $(HARNESS) scenarios/*/verify.sh
+	@if command -v pwsh >/dev/null 2>&1; then \
+		pwsh -NoProfile -File $(PS_MAKE) lint-ps; \
+	else \
+		echo "⚠ pwsh not found; skipping the PowerShell lint (scripts/*.ps1, scenarios/*/verify.ps1)."; \
+	fi
 
-check: ## Enforce script permissions (chmod 750; git only tracks 755) and no hardcoded user home paths
+check: ## Enforce script permissions (chmod 750; git only tracks 755), a UTF-8 BOM on .ps1 files and no hardcoded user home paths
 	@for f in $(HARNESS) scenarios/*/verify.sh; do \
 		perm="$$(stat -f '%Lp' "$$f" 2>/dev/null || stat -c '%a' "$$f")"; \
 		if [[ "$$perm" != "750" ]]; then \
@@ -60,7 +72,14 @@ check: ## Enforce script permissions (chmod 750; git only tracks 755) and no har
 		fi; \
 	done
 	@echo "✓ All executable scripts have 750 permissions."
-	@if grep -rnE '(/Users/[a-zA-Z0-9_-]+|/home/[a-zA-Z0-9_-]+)' \
+	@for f in scripts/*.ps1 scenarios/*/verify.ps1; do \
+		if [[ "$$(head -c 3 "$$f" | od -An -tx1 | tr -d ' \n')" != "efbbbf" ]]; then \
+			echo "✗ $$f has no UTF-8 BOM (Windows PowerShell 5.1 would misread it)."; \
+			exit 1; \
+		fi; \
+	done
+	@echo "✓ All PowerShell scripts start with a UTF-8 BOM."
+	@if grep -rnE '(/Users/[a-zA-Z0-9_-]+|/home/[a-zA-Z0-9_-]+|[A-Za-z]:[\]Users[\][a-zA-Z0-9_-]+)' \
 		--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.slidev \
 		docs/ scenarios/ scripts/ README.md .mcp.json .agents/; then \
 		echo "✗ Found hardcoded user home path(s) above."; \

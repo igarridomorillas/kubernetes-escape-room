@@ -6,16 +6,18 @@
 
 ## 1. Attendee Prerequisites (Send 48 Hours Before Event)
 
-Ask attendees to install the three required tools and run `make prepare` **before arriving at the venue** so the cluster is created, the app images are built, and every scenario image is already downloaded on their laptops (this also confirms registry access and covers the download bandwidth).
+Ask attendees to install the three required tools and run `make prepare` (Windows: `.\scripts\make.ps1 prepare`) **before arriving at the venue** so the cluster is created, the app images are built, and every scenario image is already downloaded on their laptops (this also confirms registry access and covers the download bandwidth).
 
 ### A. Required Tools (All Attendees)
 
 | Tool | Minimum Version | Verification Command | Install Guide |
 | :--- | :--- | :--- | :--- |
-| **Docker Desktop** (or Docker Engine) | Running daemon (`>= 4 GB` RAM allocated) | `docker info` | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) (`brew install --cask docker`) |
-| **kind** (Kubernetes in Docker) | `>= 0.20.0` | `kind --version` | [kind.sigs.k8s.io](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (`brew install kind`) |
-| **kubectl** | `>= 1.28` | `kubectl version --client` | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) (`brew install kubectl`) |
-| **glow** *(optional)* | any | `glow --version` | [github.com/charmbracelet/glow](https://github.com/charmbracelet/glow) (`brew install glow`). Renders hints and AI tips; without it they show as plain Markdown |
+| **Docker Desktop** (or Docker Engine) | Running daemon (`>= 4 GB` RAM allocated) | `docker info` | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) (`brew install --cask docker`, Windows: `winget install Docker.DockerDesktop`) |
+| **kind** (Kubernetes in Docker) | `>= 0.20.0` | `kind --version` | [kind.sigs.k8s.io](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (`brew install kind`, Windows: `winget install Kubernetes.kind`) |
+| **kubectl** | `>= 1.28` | `kubectl version --client` | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) (`brew install kubectl`; bundled with Docker Desktop on Windows) |
+| **glow** *(optional)* | any | `glow --version` | [github.com/charmbracelet/glow](https://github.com/charmbracelet/glow) (`brew install glow`, Windows: `winget install charmbracelet.glow`). Renders hints and AI tips; without it they show as plain Markdown |
+
+**Windows attendees** need no `make`, Bash or WSL: the PowerShell port runs on the built-in Windows PowerShell 5.1 (or PowerShell 7+). They replace `make` with `.\scripts\make.ps1` in every command (same targets, same `LEVEL=`), and should use Windows Terminal so colours and emoji render.
 
 ### B. Pre-Flight Cluster & Image Warm-Up (Run Before Event)
 
@@ -35,7 +37,17 @@ make prepare
 make start LEVEL=level-01
 ```
 
-> **Note on `KUBECONFIG`:** `make setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$PWD/kind/.kube/config"` so your manual `kubectl` commands always target the workshop cluster.
+On Windows, in PowerShell from the cloned repository:
+
+```powershell
+# Only if Windows blocks running scripts (affects this terminal only)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+.\scripts\make.ps1 prepare
+.\scripts\make.ps1 start LEVEL=level-01
+```
+
+> **Note on `KUBECONFIG`:** `make setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$PWD/kind/.kube/config"` (PowerShell: `$env:KUBECONFIG = "$PWD\kind\.kube\config"`) so your manual `kubectl` commands always target the workshop cluster.
 
 ---
 
@@ -116,7 +128,9 @@ To restrict `opencode` to read-only cluster inspection (and prevent it from runn
       "kubectl replace *": "deny",
       "kubectl exec *": "deny",
       "make solve*": "deny",
-      "./scripts/escape-room.sh solve*": "deny"
+      "./scripts/escape-room.sh solve*": "deny",
+      "*make.ps1 solve*": "deny",
+      "*escape-room.ps1 solve*": "deny"
     }
   }
 }
@@ -147,6 +161,14 @@ Run this deterministic smoke test from the repository root to verify the harness
   # Or test a single level: make test LEVEL=level-01
   ```
   *Expected:* Every level fails `verify` when broken, passes `verify` after `solve`, and fails `verify` again after `reset`.
+- [ ] **3b. If any attendee uses Windows, repeat steps 1–3 on a Windows laptop with the PowerShell port** (ideally once in Windows PowerShell 5.1 and once in PowerShell 7):
+  ```powershell
+  .\scripts\make.ps1 setup-dev
+  .\scripts\make.ps1 validate
+  .\scripts\make.ps1 cleanup
+  .\scripts\make.ps1 setup
+  .\scripts\make.ps1 test LEVEL=all
+  ```
 - [ ] **4. Print or share handouts:**
   - Share [`docs/ai-prompts-cheatsheet.md`](ai-prompts-cheatsheet.md) (one-page A4 reference) with attendees.
   - Keep [`docs/ai-exercises.md`](ai-exercises.md) open on the instructor machine for bad/good prompt comparisons and facilitator notes (**do not share before levels are solved**).

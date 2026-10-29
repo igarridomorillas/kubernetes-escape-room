@@ -12,15 +12,16 @@ A hands-on workshop for Platform, SRE, and Software Engineers. Teams race to dia
 ## Prerequisites
 
 > [!NOTE]
-> **Supported platforms:** macOS and Linux distributions. Windows is not supported.
+> **Supported platforms:** macOS and Linux run the Bash harness through `make`. Windows runs the PowerShell port through `.\scripts\make.ps1` (see [Windows (PowerShell)](#windows-powershell)).
 
 | Tool | Version | Check | Install guide |
 |---|---|---|---|
-| `make` | any | `make --version` | [GNU Make](https://www.gnu.org/software/make/) |
-| `docker` | daemon running | `docker info` | [Docker Desktop](https://docs.docker.com/desktop/) (macOS) / [Docker Engine](https://docs.docker.com/engine/install/) (Linux) |
-| `kind` | `>= 0.20.0` | `kind --version` | [kind quick start](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) |
-| `kubectl` | `>= 1.28` | `kubectl version --client` | [Install tools](https://kubernetes.io/docs/tasks/tools/#kubectl) |
-| `glow` *(optional)* | any | `glow --version` | [glow](https://github.com/charmbracelet/glow#installation) (`brew install glow`). Renders hints and AI tips; without it they show as plain Markdown |
+| `make` *(macOS/Linux)* | any | `make --version` | [GNU Make](https://www.gnu.org/software/make/) |
+| PowerShell *(Windows)* | Windows PowerShell 5.1 (built in) or PowerShell 7+ | `$PSVersionTable.PSVersion` | Nothing to install. [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows) is optional |
+| `docker` | daemon running | `docker info` | [Docker Desktop](https://docs.docker.com/desktop/) (macOS/Windows) / [Docker Engine](https://docs.docker.com/engine/install/) (Linux) |
+| `kind` | `>= 0.20.0` | `kind --version` | [kind quick start](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (Windows: `winget install Kubernetes.kind`) |
+| `kubectl` | `>= 1.28` | `kubectl version --client` | [Install tools](https://kubernetes.io/docs/tasks/tools/#kubectl) (bundled with Docker Desktop) |
+| `glow` *(optional)* | any | `glow --version` | [glow](https://github.com/charmbracelet/glow#installation) (`brew install glow`, Windows: `winget install charmbracelet.glow`). Renders hints and AI tips; without it they show as plain Markdown |
 
 ---
 
@@ -31,6 +32,8 @@ Run this once before the workshop (instructors, assistants and attendees), ideal
 ```bash
 make prepare
 ```
+
+On Windows: `.\scripts\make.ps1 prepare`.
 
 It runs `make setup`, then pulls every image the scenarios use and builds the app images for Levels 02 and 04. Images are discovered dynamically from `scenarios/` (manifests, `verify.sh`, docs and Dockerfile `FROM` lines), so nothing needs to be listed by hand. This confirms registry access and covers the download bandwidth up front. Pulled images stay in the host Docker cache and are not loaded into the kind node.
 
@@ -98,6 +101,28 @@ make test LEVEL=all     # run end-to-end smoke tests across all 4 levels (or LEV
 
 `start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Levels 02 and 04 ship small apps that `start` builds and loads into the cluster for you (no registry needed).
 
+### Windows (PowerShell)
+
+Windows uses a PowerShell port of the harness, so no `make`, Bash or WSL is needed. Replace `make` with `.\scripts\make.ps1`: the targets are the same and `LEVEL=` works as with `make`. It runs on the built-in Windows PowerShell 5.1 and on PowerShell 7+.
+
+```powershell
+# Once per terminal, only if Windows blocks running scripts:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+.\scripts\make.ps1 prepare                  # setup + pull all images + build app images
+.\scripts\make.ps1 start LEVEL=level-01     # or: .\scripts\make.ps1 start level-01
+.\scripts\make.ps1 status
+.\scripts\make.ps1 hint
+.\scripts\make.ps1 ai-assist
+.\scripts\make.ps1 verify
+.\scripts\make.ps1 cleanup
+
+# Point your own kubectl commands at the workshop cluster:
+$env:KUBECONFIG = "$PWD\kind\.kube\config"
+```
+
+The harness prints hints, incident alerts and next steps with the `.\scripts\make.ps1` form of each command. Use [Windows Terminal](https://aka.ms/terminal) (default on Windows 11) so the colours, emoji and banners render correctly. The scripts live in `scripts/escape-room.ps1`, `scripts/make.ps1` and `scenarios/*/verify.ps1`, next to their Bash twins.
+
 ---
 
 ## Repository structure
@@ -115,14 +140,17 @@ kubernetes-escape-room/
 │   └── plugins/
 │       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
-│   └── escape-room.sh               # Main CLI harness (pure Bash, zero deps)
+│   ├── escape-room.sh               # Main CLI harness (pure Bash, zero deps)
+│   ├── escape-room.ps1              # PowerShell port of the harness for Windows (5.1+, zero deps)
+│   ├── make.ps1                     # PowerShell counterpart of the Makefile (same targets)
+│   └── PSScriptAnalyzerSettings.psd1 # Lint settings for the PowerShell scripts
 ├── kind/
 │   ├── cluster-config.yaml          # Kind cluster definition (disableDefaultCNI)
 │   ├── cni/
 │   │   └── cilium.yaml              # Pinned Cilium 1.20.2 manifest (enforces NetworkPolicy)
 │   └── .kube/config                 # Repo-local kubeconfig (gitignored, written by `setup`)
 ├── scenarios/
-│   ├── level-01-ghost-image/
+│   ├── level-01-ghost-image/        # broken/, solution/, hints, verify.sh + verify.ps1
 │   ├── level-02-crashing-config/
 │   ├── level-03-silent-wall/
 │   └── level-04-ghost-microservices/
@@ -144,7 +172,8 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   └── 09-powershell-port.md    # Session 9: PowerShell port for Windows
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
