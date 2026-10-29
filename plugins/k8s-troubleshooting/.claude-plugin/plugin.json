@@ -1,0 +1,9 @@
+{
+  "name": "k8s-troubleshooting",
+  "version": "0.1.0",
+  "description": "Evidence-first, read-only Kubernetes troubleshooting skill plus a guarded kubernetes-mcp-server configuration",
+  "author": {
+    "name": "Unai Arríen"
+  },
+  "keywords": ["kubernetes", "troubleshooting", "sre", "mcp"]
+}

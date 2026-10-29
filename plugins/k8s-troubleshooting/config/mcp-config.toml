@@ -1,0 +1,15 @@
+# Strict read-only profile. v0.0.69 has no --read-only / --cluster-provider
+# flags; these options are TOML-only. The kubeconfig path is NOT set here: the
+# server uses the KUBECONFIG environment variable (or the default kubeconfig).
+read_only = true
+cluster_provider_strategy = "kubeconfig"
+disable_destructive = true
+toolsets = ["core", "config"]
+# configuration_view returns kubeconfig contents; the skill forbids reading them.
+disabled_tools = ["configuration_view"]
+
+# Block Secret payloads; ConfigMaps stay readable.
+[[denied_resources]]
+group = ""
+version = "v1"
+kind = "Secret"

@@ -314,7 +314,7 @@ layout: default
 </div>
 
 <!--
-Rule of thumb: CLI for flexibility and zero setup, MCP when you want a narrow, typed, auditable surface. Full MCP config (read_only, disable_destructive, denied v1/Secret, keep v1/ConfigMap readable) is in docs/pre-workshop-checklist.md.
+Rule of thumb: CLI for flexibility and zero setup, MCP when you want a narrow, typed, auditable surface. Full MCP config (read_only, disable_destructive, denied v1/Secret, keep v1/ConfigMap readable) is in docs/pre-workshop-checklist.md. Claude Code users can skip the manual setup: make plugin-install installs the k8s-troubleshooting plugin with the same read-only config (docs/plugin-installation.md).
 -->
 
 ---
@@ -330,7 +330,7 @@ layout: default
 <div class="grid-3">
   <div class="card"><h4><carbon-document /> <code>AGENTS.md</code></h4><span class="small">Rules, commands and conventions for agents working in the repo. Most coding agents read it.</span></div>
   <div class="card"><h4><carbon-plug /> <code>.mcp.json</code></h4><span class="small">Which MCP servers the project uses and how to start them, next to the code.</span></div>
-  <div class="card"><h4><carbon-store /> AI marketplaces</h4><span class="small">Plugins that bundle skills and MCP server configuration. Install one set and the whole team gets the same tools.</span></div>
+  <div class="card"><h4><carbon-store /> AI marketplaces</h4><span class="small">Plugins that bundle skills and MCP server configuration, so the whole team gets the same tools. This repo ships one: <code>make plugin-install</code> adds a read-only troubleshooting skill and cluster MCP to Claude Code.</span></div>
 </div>
 
 <div class="grid-2">

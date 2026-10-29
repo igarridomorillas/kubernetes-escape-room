@@ -1,5 +1,5 @@
 .PHONY: help \
-	setup-dev slides slides-export \
+	setup-dev slides slides-export plugin-install plugin-uninstall \
 	lint check validate \
 	setup prepare cleanup start status hint ai-assist verify solve reset \
 	test
@@ -9,6 +9,8 @@ HARNESS := ./scripts/escape-room.sh
 SLIDES_DIR := docs/presentation
 LEVEL ?= level-01
 ALL_LEVELS := level-01 level-02 level-03 level-04
+PLUGIN := k8s-troubleshooting
+MARKETPLACE := escape-room-marketplace
 
 ##@ General
 help: ## Show this help menu
@@ -51,6 +53,17 @@ slides-export: ## Build and export presentation slides to PDF
 	npm --prefix $(SLIDES_DIR) run build
 	npm --prefix $(SLIDES_DIR) run export
 
+plugin-install: ## Install the k8s-troubleshooting plugin from this checkout into Claude Code
+	@command -v claude >/dev/null 2>&1 || { echo "✗ claude CLI not found. See https://claude.com/claude-code"; exit 1; }
+	@claude plugin uninstall $(PLUGIN)@$(MARKETPLACE) >/dev/null 2>&1 || true
+	claude plugin install $(PLUGIN) --marketplace "$$(pwd)"
+	@echo "✓ Installed. Restart Claude Code, export KUBECONFIG=\"$$(pwd)/kind/.kube/config\" and start it from a directory outside this repo."
+
+plugin-uninstall: ## Remove the k8s-troubleshooting plugin and local marketplace from Claude Code
+	@command -v claude >/dev/null 2>&1 || { echo "✗ claude CLI not found."; exit 1; }
+	@claude plugin uninstall $(PLUGIN)@$(MARKETPLACE) || true
+	@claude plugin marketplace remove $(MARKETPLACE) || true
+
 # ─── Validation & Linting ─────────────────────────────────────────────────────
 
 lint: ## Run shellcheck on escape-room.sh and all scenario verify.sh scripts
@@ -67,7 +80,7 @@ check: ## Enforce script permissions (chmod 750; git only tracks 755) and no har
 	@echo "✓ All executable scripts have 750 permissions."
 	@if grep -rnE '(/Users/[a-zA-Z0-9_-]+|/home/[a-zA-Z0-9_-]+)' \
 		--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.slidev \
-		docs/ scenarios/ scripts/ README.md .mcp.json .agents/; then \
+		docs/ scenarios/ scripts/ plugins/ .claude-plugin/ README.md .mcp.json .agents/; then \
 		echo "✗ Found hardcoded user home path(s) above."; \
 		exit 1; \
 	fi

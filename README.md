@@ -114,6 +114,18 @@ make test LEVEL=all     # run end-to-end smoke tests across all 4 levels (or LEV
 
 ---
 
+## AI plugin
+
+`plugins/k8s-troubleshooting/` bundles a read-only troubleshooting skill and a guarded `kubernetes-mcp-server` config (read-only, Secrets denied; it uses your session's `KUBECONFIG`). Install it from this checkout into Claude Code with:
+
+```bash
+make plugin-install      # remove with: make plugin-uninstall
+```
+
+Then start Claude Code from a scratch directory outside the repo. Other CLI tools (Copilot CLI, opencode) are a TODO in [`docs/plugin-installation.md`](docs/plugin-installation.md). Requires `npx` for the MCP server.
+
+---
+
 ## Repository structure
 
 ```
@@ -122,6 +134,14 @@ kubernetes-escape-room/
 ├── README.md                        # Project overview & quickstart
 ├── Makefile                         # Task runner for slides, linting, validation & smoke tests
 ├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── .claude-plugin/
+│   └── marketplace.json             # Local marketplace so `make plugin-install` can install the plugin
+├── plugins/
+│   └── k8s-troubleshooting/         # Plugin: troubleshooting skill + read-only MCP config
+│       ├── .claude-plugin/plugin.json
+│       ├── .mcp.json
+│       ├── config/mcp-config.toml
+│       └── skills/k8s-troubleshooting/SKILL.md
 ├── skills-lock.json                 # Agent skills lockfile
 ├── .agents/
 │   ├── skills/
@@ -159,10 +179,12 @@ kubernetes-escape-room/
     │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
     │   ├── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
-    │   └── 09-kubeconfig-paths-make-help.md  # Session 9: Absolute KUBECONFIG paths & grouped make help
+    │   ├── 09-kubeconfig-paths-make-help.md  # Session 9: Absolute KUBECONFIG paths & grouped make help
+    │   └── 10-k8s-plugin.md                  # Session 10: k8s-troubleshooting plugin
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
+    ├── plugin-installation.md       # Installing the k8s-troubleshooting plugin (Claude Code; other CLIs TODO)
     └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 

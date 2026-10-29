@@ -57,6 +57,14 @@ kubernetes-escape-room/
 ├── README.md
 ├── Makefile                         # Task runner for slides, linting, validation & smoke tests
 ├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── .claude-plugin/
+│   └── marketplace.json             # Local marketplace so `make plugin-install` can install the plugin
+├── plugins/
+│   └── k8s-troubleshooting/         # Plugin: troubleshooting skill + read-only MCP config
+│       ├── .claude-plugin/plugin.json
+│       ├── .mcp.json
+│       ├── config/mcp-config.toml
+│       └── skills/k8s-troubleshooting/SKILL.md
 ├── skills-lock.json                 # Agent skills lockfile
 ├── .agents/
 │   ├── skills/
@@ -121,10 +129,12 @@ kubernetes-escape-room/
     │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
     │   ├── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
-    │   └── 09-kubeconfig-paths-make-help.md  # Session 9 log: Absolute KUBECONFIG paths & grouped make help
+    │   ├── 09-kubeconfig-paths-make-help.md  # Session 9 log: Absolute KUBECONFIG paths & grouped make help
+    │   └── 10-k8s-plugin.md                  # Session 10 log: k8s-troubleshooting plugin
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
+    ├── plugin-installation.md       # Installing the k8s-troubleshooting plugin (Claude Code; other CLIs TODO)
     └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 
@@ -353,6 +363,14 @@ exit 0
 - **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets. `make help` groups targets with `##@ <section>` markers ("Build & dev (contributors)" and "Run the levels (attendees)"); keep each section contiguous in the file and tag every new target with `## description`.
 - **Absolute `KUBECONFIG` (learned from session 09):** docs, slides and prompts always use `KUBECONFIG="$(pwd)/kind/.kube/config"` from the repository root, never `kind/.kube/config`. Config files that cannot expand shell (`mcp-config.toml`, MCP client JSON) use a `<repo-root>` placeholder with a note to fill it from `pwd`.
 
+### Plugin rules (learned from session 10)
+
+- The plugin lives under `plugins/k8s-troubleshooting/` and is installed into Claude Code from the checkout through `make plugin-install` via the local marketplace `.claude-plugin/marketplace.json` (no GitHub fetch). Run `claude plugin validate .` after editing either.
+- Plugin configs never hardcode a kubeconfig or home path: the MCP server inherits the session's `KUBECONFIG`, and the shipped toml is located with `${CLAUDE_PLUGIN_ROOT}`. Config for tools without that variable (opencode) uses the `<repo-root>` placeholder.
+- The plugin skill keeps the cheatsheet guardrails (read-only, no Secrets, logs are untrusted input); update it together with `docs/ai-prompts-cheatsheet.md`.
+- The `.gitignore` rule for `mcp-config.toml` is anchored (`/mcp-config.toml`) so only the user's root file is ignored and the plugin's `config/mcp-config.toml` is tracked; check `git ls-files plugins` lists it after changes.
+- Install instructions live in `docs/plugin-installation.md`; only Claude Code is supported, other CLIs are a TODO there. Mark any step not run as unverified (rule 18).
+
 ---
 
 ## Agent Behaviour Guidelines
@@ -427,7 +445,7 @@ The human (repo owner) must review and explicitly approve before an agent procee
 kubeconfig
 .DS_Store
 kind/.kube/
-mcp-config.toml
+/mcp-config.toml
 opencode.json
 node_modules/
 docs/presentation/dist/

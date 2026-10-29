@@ -64,14 +64,18 @@ k8sgpt analyze --filter=NetworkPolicy --namespace escape-level-03
 
 ### Optional Tier 3 Setup: Read-Only Kubernetes MCP Server
 
-If an attendee or instructor wants to use [`containers/kubernetes-mcp-server`](https://github.com/containers/kubernetes-mcp-server), create `mcp-config.toml` in the repository root (gitignored):
+**Claude Code shortcut:** run `make plugin-install` from the repository root. It installs the `k8s-troubleshooting` plugin (troubleshooting skill + the same read-only MCP config, shipped in `plugins/k8s-troubleshooting/`), so you can skip the manual setup below. Details and the TODO for other CLI tools: [`plugin-installation.md`](plugin-installation.md).
+
+Manual setup (any MCP client; keep it in sync with the plugin's [`mcp-config.toml`](../plugins/k8s-troubleshooting/config/mcp-config.toml), the reference profile): if an attendee or instructor wants to use [`containers/kubernetes-mcp-server`](https://github.com/containers/kubernetes-mcp-server), create `mcp-config.toml` in the repository root (gitignored):
 
 ```toml
 # mcp-config.toml — strict read-only profile scoped to the workshop cluster
 read_only = true
+cluster_provider_strategy = "kubeconfig"
 disable_destructive = true
 kubeconfig = "<repo-root>/kind/.kube/config"  # absolute path: replace <repo-root> with the output of `pwd`
 toolsets = ["core", "config"]
+disabled_tools = ["configuration_view"]  # returns kubeconfig contents
 
 # Block Secret payloads; keep v1/ConfigMap readable for Levels 02 and 04
 [[denied_resources]]

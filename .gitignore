@@ -3,7 +3,7 @@
 kubeconfig
 .DS_Store
 kind/.kube/
-mcp-config.toml
+/mcp-config.toml
 opencode.json
 node_modules/
 docs/presentation/dist/
