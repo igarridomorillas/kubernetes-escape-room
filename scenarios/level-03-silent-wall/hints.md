@@ -35,3 +35,16 @@ Every pod is healthy and yet nobody can talk to anybody. Run `make ai-assist`, p
 into your AI agent and let it chase the traffic across resources while you stretch your legs.
 
 Check its homework, though: the AI proposes, the cluster decides.
+
+Want to watch the packets for yourself? Cilium's Hubble shows every flow and whether
+it was forwarded or dropped. Open the Hubble UI with either command:
+
+```bash
+cilium hubble ui
+```
+
+```bash
+kubectl port-forward -n kube-system service/hubble-ui 8080:80
+```
+
+With the port-forward, browse to `http://localhost:8080`.

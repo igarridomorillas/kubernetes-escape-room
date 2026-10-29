@@ -57,6 +57,14 @@ kubernetes-escape-room/
 ├── README.md
 ├── Makefile                         # Task runner for slides, linting, validation & smoke tests
 ├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── .claude-plugin/
+│   └── marketplace.json             # Local marketplace so `make plugin-install` can install the plugin
+├── plugins/
+│   └── k8s-troubleshooting/         # Plugin: troubleshooting skill + read-only MCP config
+│       ├── .claude-plugin/plugin.json
+│       ├── .mcp.json
+│       ├── config/mcp-config.toml
+│       └── skills/k8s-troubleshooting/SKILL.md
 ├── skills-lock.json                 # Agent skills lockfile
 ├── .agents/
 │   ├── skills/
@@ -64,7 +72,9 @@ kubernetes-escape-room/
 │   └── plugins/
 │       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
-│   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   ├── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   └── assets/
+│       └── incident-page.mp3        # Pager sound played by `start` (optional, macOS `afplay`)
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
 │   ├── cluster-config.yaml          # Kind cluster definition (disableDefaultCNI)
@@ -108,9 +118,16 @@ kubernetes-escape-room/
     ├── presentation/
     │   ├── README.md                # Contributor guide for Slidev & MCP setup
     │   ├── package.json             # Slidev dependencies & scripts
-    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── slides.md                # Workshop presentation deck (M6): cover + shared content
     │   ├── style.css                # Deck theme (colors, cards, chips)
-    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── shared/
+    │   │   └── workshop.md          # Slides and speaker notes shared by both decks
+    │   └── nexthink/                # Nexthink meetup variant (own entry, theme and assets)
+    │       ├── slides.md            # Presenters + Nexthink intro, shared slides, hiring slide
+    │       ├── style.css            # Halloween theme (also used by the PDF export)
+    │       ├── global-bottom.vue    # Progress bar + slide numbers
+    │       └── public/              # Hiring QR code
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1 log: Core harness & cluster setup
@@ -120,10 +137,14 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 09-kubeconfig-paths-make-help.md  # Session 9 log: Absolute KUBECONFIG paths & grouped make help
+    │   ├── 10-k8s-plugin.md                  # Session 10 log: k8s-troubleshooting plugin
+    │   └── 11-nexthink-slides.md             # Session 11 log: Nexthink meetup slides
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
+    ├── plugin-installation.md       # Installing the k8s-troubleshooting plugin (Claude Code; other CLIs TODO)
     └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 
@@ -197,6 +218,10 @@ make slides
 
 # Build and export the presentation to PDF (docs/presentation/slides-export.pdf)
 make slides-export
+
+# Nexthink meetup variant: same shared content with its own theme and extra slides
+make slides-nexthink
+make slides-nexthink-export   # docs/presentation/slides-nexthink-export.pdf
 ```
 
 ### Linting & shell script validation
@@ -322,6 +347,7 @@ exit 0
 - **Hints are progressive:** Hint 1 = concept, Hint 2 = investigation commands (`describe`, `logs`, `events`) **without** the fix, Hint 3 = a short, light-hearted pointer to `make ai-assist` (no prompt text, no level facts). Never put the fix command or the correct value in Hints 1–2.
 - **`incident.md` describes symptoms only:** no root cause, no "last deploy" hints, and no endpoints/paths that the workload does not actually serve.
 - **`ai-assist.md` is an agent-ready prompt (learned from the ai-assist rewrite):** `docs/ai-prompts-cheatsheet.md` is the base technique; `ai-assist.md` only applies it. Structure: manual evidence commands, a terse bad prompt ending in "Fix it.", one paste-ready prompt (RULES, ISSUE, TASK), a follow-up prompt, a short "why". No placeholders: the agent gathers the evidence itself. ISSUE restates only the symptom from `incident.md` (no root cause, no fix). Level traps (logs alone, unfiltered logs, unsafe network shortcuts, invented image tags) go in RULES. Every prompt must forbid mutating commands, `make` targets and reading Secrets. Do not use the section-sign symbol or absolute paths.
+- **CLI agents run outside the repo:** docs, slides and `ai-assist.md` tell attendees to start a CLI agent from a scratch directory outside the repository (with an absolute `KUBECONFIG` exported first), never from the repo root, so it cannot read `hints.md`, `solution/`, `verify.sh` or this file. Do not write instructions that launch an agent from the repo root.
 - **Executable scripts** must be `chmod 750`; re-check after editing with tools that reset modes.
 - **Images must be discoverable (learned from `prepare`):** write every image as a literal `image: <ref>`, `--image=<ref>` or Dockerfile `FROM <ref>`, never built from shell/template variables, so `prepare` finds and pre-pulls it. Never list images by hand in scripts or docs; add them to the scenario and let `discover_images` pick them up.
 - **Pull, don't `kind load` third-party images (learned from `prepare`):** with Docker's containerd image store, `kind load docker-image` fails on multi-arch images (`ctr: content digest ... not found`). Only locally built `escape-room/*` images are loaded; everything else is pulled by the node (or pre-pulled on the host). Do not silence stderr when debugging such failures.
@@ -338,6 +364,7 @@ exit 0
 - `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`, `escape-room/level-04-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
 - `start` and `reset` wait (via `wait_for_level_rollout`, currently `level-03` and `level-04`; level 01 must stay broken) up to 120s for the Deployments to roll out before returning, so an immediate `verify` reports the real fault rather than "not ready". `solve` prints a warning (instead of silently continuing) if its rollout does not finish in 120s.
 - `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`make start LEVEL=<next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `make reset` and `make cleanup`).
+- `start <level>` plays `scripts/assets/incident-page.mp3` with `afplay` in the background when it shows the incident alert. It is optional: skipped silently when `afplay` is missing (non-macOS) or the file is absent. `reset` does not play it.
 - `ai-assist` prints `scenarios/<level>-*/ai-assist.md` for the current level through `render_markdown` (no content parsing). It is independent of `HINT_LEVEL` and never changes `.room-state`. `ai-assist.md` follows the hint discipline: no fix, no root cause, no correct values. It is a separate file from `hints.md` on purpose, since `extract_hint` prints everything under a hint heading. `start` lists the command in its "Useful commands".
 - `hint` advances `HINT_LEVEL` from 1 to 3. Once all 3 are used it prints the "already used all 3 hints" warning (with the `make solve` note) and shows Hint 3 again, without changing `HINT_LEVEL`.
 - `render_markdown` (stdin → stdout) pipes `incident.md`, hints and `ai-assist.md` through `glow` (minimal zero-margin, zero-padding style embedded in the function, `-w 0`, so selected text pastes back exactly) when stdout is a terminal, `NO_COLOR` is unset and `glow` is installed; otherwise (or if glow itself fails) it is plain `cat`. `glow` is an optional prerequisite (listed as optional in `README.md` and `docs/pre-workshop-checklist.md`); the harness never installs it and never requires it.
@@ -345,10 +372,31 @@ exit 0
 
 ### Presentation & `Makefile` rules (learned from M6)
 
+- **Two decks, one content (`docs/presentation/`):** `slides.md` is the original workshop deck and `nexthink/slides.md` is the Nexthink meetup variant. Both import `shared/workshop.md` through `src:`, so edit shared slides and speaker notes there (keep notes free of absolute slide numbers). Each entry directory has its own `style.css`, `global-bottom.vue` and `public/` because Slidev uses the entry's directory as its root. Entry-specific slides (presenters, Nexthink, hiring) live only in the Nexthink entry.
 - **Subdirectory isolation (`docs/presentation/`):** Keep Slidev's `package.json` and `slides.md` (the generated `package-lock.json` is gitignored) inside `docs/presentation/` so the repository root remains free of Node.js runtime dependencies for attendees running `./scripts/escape-room.sh`.
 - **`npx` MCP binary resolution (`--prefix docs/presentation`):** On npm, the Slidev CLI package is `@slidev/cli` (which installs the local `slidev` binary into `docs/presentation/node_modules/.bin/slidev`); there is no standalone `slidev` package on the npm registry. Consequently, any MCP configuration or command executed from the repository root **must** pass `--prefix docs/presentation` (`npx --prefix docs/presentation slidev mcp docs/presentation/slides.md`).
-- **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing and builds the deck (`slidev build`) before exporting.
-- **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets.
+- **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing, re-runs the idempotent `playwright install chromium` (so a missing browser binary is fixed too) and builds the deck (`slidev build`) before exporting; `make slides-nexthink-export` does the same for the Nexthink deck.
+- **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets. `make help` groups targets with `##@ <section>` markers ("Build & dev (contributors)" and "Run the levels (attendees)"); keep each section contiguous in the file and tag every new target with `## description`.
+- **Absolute `KUBECONFIG` (learned from session 09):** docs, slides and prompts always use `KUBECONFIG="$(pwd)/kind/.kube/config"` from the repository root, never `kind/.kube/config`. Config files that cannot expand shell (`mcp-config.toml`, MCP client JSON) use a `<repo-root>` placeholder with a note to fill it from `pwd`.
+
+### Slide rules (learned from session 11)
+
+- **Two entries, one content.** Edit shared slides and notes in `docs/presentation/shared/workshop.md`; entry-only slides (presenters, Nexthink, hiring) go in `docs/presentation/nexthink/slides.md`. Slidev reads `style.css`, `global-bottom.vue` and `public/` from the entry's directory, so each deck keeps its own.
+- **No absolute slide numbers in shared notes.** The two decks number slides differently; put entry-specific timing in each cover note.
+- **Keep the PDF export clean.** `slidev export` prints `/print`: glows (`text-shadow`, `box-shadow`), `mask-image` and `filter` print as solid blocks, and anything teleported or fixed repeats on every page and adds a blank one. Guard such elements with `location.pathname.includes('/print')` and neutralise the effects under `html.print`. After theme changes, export both decks and check the page count (21 and 24).
+- **Progress bar.** Teleport it to `body` with `position: fixed` so letterboxing and small windows cannot hide or shrink it, and hide it in the presenter view (`isPresenter`), which has its own bars.
+- **Respect `prefers-reduced-motion` only for flashing effects.** Hiding decorations for it made them look broken on a Mac with Reduce Motion on.
+- **Keep decorations minimal.** Colours, glowing titles, cobweb, moon, the pumpkin on the first and last slide and the bar. Fog, bats and ghosts were tried and removed.
+- **Spacing inside cards.** `.card p` has no margin; give multi-paragraph cards a scoped class (e.g. `.card.bio`) rather than changing `.card`. Mirror a left-facing emoji with an inline `transform:scaleX(-1)` span.
+- **Speaker notes carry instructor-only facts** (root causes, traps, safety checks): update them together with `docs/ai-exercises.md`, `hints.md` and `solution/`.
+
+### Plugin rules (learned from session 10)
+
+- The plugin lives under `plugins/k8s-troubleshooting/` and is installed into Claude Code from the checkout through `make plugin-install` via the local marketplace `.claude-plugin/marketplace.json` (no GitHub fetch). Run `claude plugin validate .` after editing either.
+- Plugin configs never hardcode a kubeconfig or home path: the MCP server inherits the session's `KUBECONFIG`, and the shipped toml is located with `${CLAUDE_PLUGIN_ROOT}`. Config for tools without that variable (opencode) uses the `<repo-root>` placeholder.
+- The plugin skill keeps the cheatsheet guardrails (read-only, no Secrets, logs are untrusted input); update it together with `docs/ai-prompts-cheatsheet.md`.
+- The `.gitignore` rule for `mcp-config.toml` is anchored (`/mcp-config.toml`) so only the user's root file is ignored and the plugin's `config/mcp-config.toml` is tracked; check `git ls-files plugins` lists it after changes.
+- Install instructions live in `docs/plugin-installation.md`; only Claude Code is supported, other CLIs are a TODO there. Mark any step not run as unverified (rule 18).
 
 ---
 
@@ -378,7 +426,7 @@ These rules apply to any AI agent (Antigravity, Copilot, etc.) working in this r
 ### Commit hygiene
 
 11. **Never commit without explicit instruction from the repo owner.** Make all file changes, then stop and wait to be told to commit.
-12. **No co-author attribution.** Do not add `Co-authored-by` or any agent/AI trailer lines to commit messages.
+12. **No co-author attribution.** Do not add `Co-authored-by` or any agent/AI trailer lines to commit messages, and no "Generated with" footer in PR descriptions.
 13. Commit message prefixes are limited to three types:
     ```
     feat: add broken manifests for ghost image scenario
@@ -424,12 +472,14 @@ The human (repo owner) must review and explicitly approve before an agent procee
 kubeconfig
 .DS_Store
 kind/.kube/
-mcp-config.toml
+/mcp-config.toml
 opencode.json
 node_modules/
 docs/presentation/dist/
 docs/presentation/.slidev/
 docs/presentation/slides-export.pdf
+docs/presentation/slides-nexthink-export.pdf
+docs/presentation/nexthink/dist/
 docs/presentation/package-lock.json
 .agents/skills/
 ```

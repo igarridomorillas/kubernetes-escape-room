@@ -1,0 +1,18 @@
+{
+  "name": "escape-room-marketplace",
+  "owner": {
+    "name": "Unai Arríen"
+  },
+  "metadata": {
+    "description": "AI plugins for Kubernetes troubleshooting, born from the Kubernetes Escape Room workshop"
+  },
+  "plugins": [
+    {
+      "name": "k8s-troubleshooting",
+      "source": "./plugins/k8s-troubleshooting",
+      "description": "Read-only Kubernetes troubleshooting skill plus a guarded kubernetes-mcp-server configuration",
+      "category": "devops",
+      "keywords": ["kubernetes", "troubleshooting", "sre", "mcp"]
+    }
+  ]
+}

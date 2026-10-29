@@ -1,5 +1,5 @@
 .PHONY: help \
-	setup-dev slides slides-export \
+	setup-dev slides slides-export slides-nexthink slides-nexthink-export plugin-install plugin-uninstall \
 	lint check validate \
 	setup prepare cleanup start status hint ai-assist verify solve reset \
 	test
@@ -9,15 +9,22 @@ HARNESS := ./scripts/escape-room.sh
 SLIDES_DIR := docs/presentation
 LEVEL ?= level-01
 ALL_LEVELS := level-01 level-02 level-03 level-04
+PLUGIN := k8s-troubleshooting
+MARKETPLACE := escape-room-marketplace
 
+##@ General
 help: ## Show this help menu
 	@echo ""
 	@echo "Kubernetes Escape Room — Makefile Targets"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"} \
+		/^##@/ {sub(/^##@ */, ""); if ($$0 != sec) {sec = $$0; printf "\n\033[1m%s\033[0m\n", sec}} \
+		/^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 
 # ─── Contributor & Presentation Setup ─────────────────────────────────────────
+
+##@ Build & dev (contributors)
 
 setup-dev: ## Install contributor/dev requirements (shellcheck, Slidev, Playwright & agent skills)
 	@if ! command -v shellcheck >/dev/null 2>&1; then \
@@ -43,8 +50,30 @@ slides: ## Start the live-reloading Slidev presentation server (http://localhost
 
 slides-export: ## Build and export presentation slides to PDF
 	@test -d $(SLIDES_DIR)/node_modules/playwright-chromium || $(MAKE) setup-dev
+	@npx --prefix $(SLIDES_DIR) playwright install chromium >/dev/null
 	npm --prefix $(SLIDES_DIR) run build
 	npm --prefix $(SLIDES_DIR) run export
+
+slides-nexthink: ## Start the Nexthink meetup variant of the slides (http://localhost:3030)
+	@test -d $(SLIDES_DIR)/node_modules || $(MAKE) setup-dev
+	npm --prefix $(SLIDES_DIR) run dev:nexthink
+
+slides-nexthink-export: ## Build and export the Nexthink meetup slides to PDF
+	@test -d $(SLIDES_DIR)/node_modules/playwright-chromium || $(MAKE) setup-dev
+	@npx --prefix $(SLIDES_DIR) playwright install chromium >/dev/null
+	npm --prefix $(SLIDES_DIR) run build:nexthink
+	npm --prefix $(SLIDES_DIR) run export:nexthink
+
+plugin-install: ## Install the k8s-troubleshooting plugin from this checkout into Claude Code
+	@command -v claude >/dev/null 2>&1 || { echo "✗ claude CLI not found. See https://claude.com/claude-code"; exit 1; }
+	@claude plugin uninstall $(PLUGIN)@$(MARKETPLACE) >/dev/null 2>&1 || true
+	claude plugin install $(PLUGIN) --marketplace "$$(pwd)"
+	@echo "✓ Installed. Restart Claude Code, export KUBECONFIG=\"$$(pwd)/kind/.kube/config\" and start it from a directory outside this repo."
+
+plugin-uninstall: ## Remove the k8s-troubleshooting plugin and local marketplace from Claude Code
+	@command -v claude >/dev/null 2>&1 || { echo "✗ claude CLI not found."; exit 1; }
+	@claude plugin uninstall $(PLUGIN)@$(MARKETPLACE) || true
+	@claude plugin marketplace remove $(MARKETPLACE) || true
 
 # ─── Validation & Linting ─────────────────────────────────────────────────────
 
@@ -62,45 +91,13 @@ check: ## Enforce script permissions (chmod 750; git only tracks 755) and no har
 	@echo "✓ All executable scripts have 750 permissions."
 	@if grep -rnE '(/Users/[a-zA-Z0-9_-]+|/home/[a-zA-Z0-9_-]+)' \
 		--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.slidev \
-		docs/ scenarios/ scripts/ README.md .mcp.json .agents/; then \
+		docs/ scenarios/ scripts/ plugins/ .claude-plugin/ README.md .mcp.json .agents/; then \
 		echo "✗ Found hardcoded user home path(s) above."; \
 		exit 1; \
 	fi
 	@echo "✓ No hardcoded user home paths found."
 
 validate: lint check ## Run all static validations (lint + check)
-
-# ─── Cluster & Scenario Lifecycle ─────────────────────────────────────────────
-
-setup: ## Create Kind cluster 'escape-room' and install Cilium CNI
-	$(HARNESS) setup
-
-cleanup: ## Tear down Kind cluster and clean local state
-	$(HARNESS) cleanup
-
-prepare: ## Create cluster, pull every scenario image, build app images
-	$(HARNESS) prepare
-
-start: ## Start a level (e.g., make start LEVEL=level-01)
-	$(HARNESS) start $(LEVEL)
-
-status: ## Show active scenario and pod statuses
-	$(HARNESS) status
-
-hint: ## Display the next progressive hint (1 -> 2 -> 3)
-	$(HARNESS) hint
-
-ai-assist: ## Show the spoiler-free AI copilot tip for the active level
-	$(HARNESS) ai-assist
-
-verify: ## Run the active level's in-cluster verification probe
-	$(HARNESS) verify
-
-solve: ## Apply the reference solution for the active level (instructor only)
-	$(HARNESS) solve
-
-reset: ## Re-inject the active level's broken state
-	$(HARNESS) reset
 
 # ─── End-to-End Level Smoke Testing ───────────────────────────────────────────
 
@@ -131,3 +128,39 @@ test: ## DESTRUCTIVE: smoke-test levels, resets .room-state (make test LEVEL=lev
 	@if [[ "$(LEVEL)" == "all" ]]; then \
 		echo "🎉 All levels (01–04) passed end-to-end smoke testing!"; \
 	fi
+
+# ─── Cluster & Scenario Lifecycle ─────────────────────────────────────────────
+
+##@ Run the levels (attendees)
+
+setup: ## Create Kind cluster 'escape-room' and install Cilium CNI
+	$(HARNESS) setup
+
+cleanup: ## Tear down Kind cluster and clean local state
+	$(HARNESS) cleanup
+
+prepare: ## Create cluster, pull every scenario image, build app images
+	$(HARNESS) prepare
+
+start: ## Start a level (e.g., make start LEVEL=level-01)
+	$(HARNESS) start $(LEVEL)
+
+status: ## Show active scenario and pod statuses
+	$(HARNESS) status
+
+hint: ## Display the next progressive hint (1 -> 2 -> 3)
+	$(HARNESS) hint
+
+ai-assist: ## Show the spoiler-free AI copilot tip for the active level
+	$(HARNESS) ai-assist
+
+verify: ## Run the active level's in-cluster verification probe
+	$(HARNESS) verify
+
+reset: ## Re-inject the active level's broken state
+	$(HARNESS) reset
+
+##@ Instructor
+
+solve: ## Apply the reference solution for the active level (instructor only)
+	$(HARNESS) solve

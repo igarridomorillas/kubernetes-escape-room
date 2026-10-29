@@ -35,7 +35,7 @@ make prepare
 make start LEVEL=level-01
 ```
 
-> **Note on `KUBECONFIG`:** `make setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$PWD/kind/.kube/config"` so your manual `kubectl` commands always target the workshop cluster.
+> **Note on `KUBECONFIG`:** `make setup` writes a repo-local kubeconfig at `kind/.kube/config` and also updates your active context to `kind-escape-room`. If you switch contexts in another terminal, run `export KUBECONFIG="$(pwd)/kind/.kube/config"` so your manual `kubectl` commands always target the workshop cluster.
 
 ---
 
@@ -47,7 +47,7 @@ Every scenario is designed to work with **zero AI tooling setup** using any free
 | :--- | :--- | :--- |
 | **Tier 1: Web Copilot (Default)** | **None** — open Gemini, ChatGPT, or Claude in a browser | Copy-paste raw `kubectl` output using the **SRE Copilot Prompt Pattern** in [`docs/ai-prompts-cheatsheet.md`](ai-prompts-cheatsheet.md) |
 | **Tier 2: `k8sgpt`** | Optional (`k8sgpt` binary + an AI backend configured with `k8sgpt auth`) | Runs built-in analyzers locally (`k8sgpt analyze`); `--explain` sends the structured finding to the AI backend, `--anonymize` masks sensitive fields. Use it as a first look, then confirm with `describe` / `logs` |
-| **Tier 3: Read-Only Kubernetes MCP Server** | Optional (`Node.js` / `npx` + MCP-capable client) | Calls read-only cluster tools (`pods_list`, `pods_get`, `pods_log`, `events_list`, `resources_get`) scoped to `kind/.kube/config` |
+| **Tier 3: Read-Only Kubernetes MCP Server** | Optional (`Node.js` / `npx` + MCP-capable client) | Calls read-only cluster tools (`pods_list`, `pods_get`, `pods_log`, `events_list`, `resources_get`) scoped to the repo-local `kind/.kube/config` (absolute path) |
 | **Tier 4: CLI Agent (`opencode`, `kubectl-ai`)** | Optional (CLI agent binary installed) | Runs `kubectl get`/`describe`/`logs` with a read-only permission policy (`opencode.json`) |
 
 ### Optional Tier 2 Setup: `k8sgpt`
@@ -55,7 +55,7 @@ Every scenario is designed to work with **zero AI tooling setup** using any free
 Install `k8sgpt` from the [k8sgpt docs](https://k8sgpt.ai/docs/getting-started/overview), configure a backend with `k8sgpt auth` (a local model avoids sending cluster data off-machine), and point it at the workshop cluster:
 
 ```bash
-export KUBECONFIG="$PWD/kind/.kube/config"
+export KUBECONFIG="$(pwd)/kind/.kube/config"
 k8sgpt analyze --namespace escape-level-01 --explain --anonymize
 k8sgpt analyze --filter=NetworkPolicy --namespace escape-level-03
 ```
@@ -64,14 +64,18 @@ k8sgpt analyze --filter=NetworkPolicy --namespace escape-level-03
 
 ### Optional Tier 3 Setup: Read-Only Kubernetes MCP Server
 
-If an attendee or instructor wants to use [`containers/kubernetes-mcp-server`](https://github.com/containers/kubernetes-mcp-server), create `mcp-config.toml` in the repository root (gitignored):
+**Claude Code shortcut:** run `make plugin-install` from the repository root. It installs the `k8s-troubleshooting` plugin (troubleshooting skill + the same read-only MCP config, shipped in `plugins/k8s-troubleshooting/`), so you can skip the manual setup below. Details and the TODO for other CLI tools: [`plugin-installation.md`](plugin-installation.md).
+
+Manual setup (any MCP client; keep it in sync with the plugin's [`mcp-config.toml`](../plugins/k8s-troubleshooting/config/mcp-config.toml), the reference profile): if an attendee or instructor wants to use [`containers/kubernetes-mcp-server`](https://github.com/containers/kubernetes-mcp-server), create `mcp-config.toml` in the repository root (gitignored):
 
 ```toml
 # mcp-config.toml — strict read-only profile scoped to the workshop cluster
 read_only = true
+cluster_provider_strategy = "kubeconfig"
 disable_destructive = true
-kubeconfig = "kind/.kube/config"
+kubeconfig = "<repo-root>/kind/.kube/config"  # absolute path: replace <repo-root> with the output of `pwd`
 toolsets = ["core", "config"]
+disabled_tools = ["configuration_view"]  # returns kubeconfig contents
 
 # Block Secret payloads; keep v1/ConfigMap readable for Levels 02 and 04
 [[denied_resources]]
@@ -80,15 +84,15 @@ version = "v1"
 kind = "Secret"
 ```
 
-Register the server in your MCP client configuration:
+`kubeconfig`, `KUBECONFIG` and `--config` must be absolute paths (MCP clients may start the server from another directory), so replace `<repo-root>` with the output of `pwd` run in the repository root. Register the server in your MCP client configuration, and start the MCP client from a scratch directory outside the repository (not the repo root, which also holds the Slidev `.mcp.json`, `AGENTS.md`, hints and solutions):
 
 ```json
 {
   "mcpServers": {
     "k8s-escape-room": {
       "command": "npx",
-      "args": ["-y", "kubernetes-mcp-server@0.0.69", "--config", "mcp-config.toml"],
-      "env": { "KUBECONFIG": "kind/.kube/config" }
+      "args": ["-y", "kubernetes-mcp-server@0.0.69", "--config", "<repo-root>/mcp-config.toml"],
+      "env": { "KUBECONFIG": "<repo-root>/kind/.kube/config" }
     }
   }
 }
@@ -96,7 +100,15 @@ Register the server in your MCP client configuration:
 
 ### Optional Tier 4 Setup: CLI Agent (`opencode`)
 
-To restrict `opencode` to read-only cluster inspection (and prevent it from running `make solve`), save `opencode.json` in the repository root (gitignored) and launch with `KUBECONFIG=kind/.kube/config opencode`:
+To restrict `opencode` to read-only cluster inspection (and prevent it from running `make solve`), save `opencode.json` in a scratch directory **outside the repository** (for example `~/escape-room-agent`) and launch from there. Never start the agent in the repository root: it would read `AGENTS.md`, `hints.md` and `solution/` and spoil the investigation. From the repository root, pin the kubeconfig (absolute path) first, then change directory:
+
+```bash
+export KUBECONFIG="$(pwd)/kind/.kube/config"
+mkdir -p ~/escape-room-agent && cd ~/escape-room-agent
+opencode
+```
+
+`opencode.json`:
 
 ```json
 {
@@ -140,7 +152,7 @@ Run this deterministic smoke test from the repository root to verify the harness
   make cleanup
   make setup
   ```
-  *Expected:* Cluster `escape-room` is created, Cilium `1.20.2` and Hubble roll out, and `kubectl --kubeconfig kind/.kube/config get nodes` shows `Ready`.
+  *Expected:* Cluster `escape-room` is created, Cilium `1.20.2` and Hubble roll out, and `kubectl --kubeconfig "$(pwd)/kind/.kube/config" get nodes` shows `Ready`.
 - [ ] **3. Smoke-test all 4 levels (`level-01`, `level-02`, `level-03`, `level-04`):**
   ```bash
   make test LEVEL=all
@@ -153,7 +165,7 @@ Run this deterministic smoke test from the repository root to verify the harness
 
 ### B. 30 Minutes Before the Workshop (Room Readiness)
 
-- [ ] Start Docker Desktop on the instructor laptop and verify `export KUBECONFIG="$PWD/kind/.kube/config"`.
+- [ ] Start Docker Desktop on the instructor laptop and verify `export KUBECONFIG="$(pwd)/kind/.kube/config"`.
 - [ ] Reset the instructor cluster to Level 01 so the live terminal demo is ready:
   ```bash
   make start LEVEL=level-01
@@ -170,11 +182,11 @@ Run this deterministic smoke test from the repository root to verify the harness
 
 | Time | Segment | Facilitator Action |
 | :--- | :--- | :--- |
-| `00:00–10:00` | **Talk: incidents, then vs now, AI best practices & tooling** | Present Slides 2–14: incident lifecycle, 5-stage evidence loop, guardrails, tooling tiers (`k8sgpt`, MCP, CLI agents), sharing skills/MCP; Slide 15 for the harness |
-| `10:00–19:00` | **Level 01: The Ghost Image** | Attendees run `start level-01`. Compare vague prompt vs pasting `describe pod` Events (Slides 16–17) |
-| `19:00–33:00` | **Level 02: The Crashing Config** | Attendees run `start level-02`. Highlight compound faults: `KeyError` in logs + `OOMKilled` in `describe` (Slides 18–19) |
-| `33:00–50:00` | **Level 03: The Silent Wall** | Attendees run `start level-03`. Run the 5-min **Challenge the AI's Hypothesis** exercise (`504` vs `502`, ClusterIP vs Pod IP) (Slides 20–22) |
-| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `make cleanup` (Slides 23–24) |
+| `00:00–10:00` | **Talk: incidents, then vs now, AI best practices & tooling** | Present Slides 2–12: incident lifecycle, 5-stage evidence loop, guardrails, tooling tiers (CLI agents, MCP), sharing skills/MCP; Slide 13 for the harness |
+| `10:00–19:00` | **Level 01: The Ghost Image** | Attendees run `start level-01`. Brief with Slide 14; compare vague prompt vs pasting `describe pod` Events (Slide 7) |
+| `19:00–33:00` | **Level 02: The Crashing Config** | Attendees run `start level-02`. Highlight compound faults: `KeyError` in logs + `OOMKilled` in `describe` (Slide 15) |
+| `33:00–50:00` | **Level 03: The Silent Wall** | Attendees run `start level-03`. Run the 5-min **Challenge the AI's Hypothesis** exercise (`504` vs `502`, ClusterIP vs Pod IP; steps in [`ai-exercises.md`](ai-exercises.md), no slide) (Slide 16) |
+| `50:00–55:00` | **Debrief & Rubric** | Score AI assistance with the 4-criterion rubric, announce Level 04 as a take-home, and run `make cleanup` (Slides 17–18); mention follow-up resources (Slide 19); close with the "Keep training without AI" slide (Slide 20) before Q&A (Slide 21) |
 | *Flex* | **Per-level targets** | Design targets are 8–10, 12–15 and 15–20 min (Levels 01–03). Fast rooms move on early; if you run long, skip the Level 03 exercise discussion rather than the debrief |
 | *Take-home* | **Level 04: Ghost Microservices** | Not presented in the deck. Fast finishers or attendees run `start level-04` (`5,000`-line log haystack + `grep -A 5 -E "ERROR\|Exception"`) |
 

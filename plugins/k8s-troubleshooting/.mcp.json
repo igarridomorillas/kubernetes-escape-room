@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "kubernetes": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "kubernetes-mcp-server@0.0.69",
+        "--config",
+        "${CLAUDE_PLUGIN_ROOT}/config/mcp-config.toml"
+      ]
+    }
+  }
+}

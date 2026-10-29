@@ -6,7 +6,10 @@
     "dev": "slidev slides.md",
     "build": "slidev build slides.md",
     "export": "slidev export slides.md",
-    "mcp": "slidev mcp slides.md"
+    "mcp": "slidev mcp slides.md",
+    "dev:nexthink": "slidev nexthink/slides.md",
+    "build:nexthink": "slidev build nexthink/slides.md",
+    "export:nexthink": "slidev export nexthink/slides.md --output slides-nexthink-export.pdf"
   },
   "dependencies": {
     "@slidev/cli": "^52.14.1",

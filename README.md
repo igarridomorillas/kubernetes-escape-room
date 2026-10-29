@@ -57,12 +57,26 @@ Run the steps in this order. Every level needs a cluster first, so `make setup` 
    - `make status`: active level and pod statuses.
    - `make hint`: next progressive hint (concept, then investigation commands, then a nudge to run `make ai-assist`).
    - `make ai-assist`: a paste-ready prompt for an AI agent with `kubectl` access, plus a bad-prompt example and a follow-up prompt. It never spoils the fix and doesn't use up a hint.
+   - **Using a CLI agent?** Start it from a scratch directory **outside this repository** (see [Running a CLI agent](#running-a-cli-agent-outside-the-repo)).
 4. **Check your fix:** `make verify`. On success the level is marked completed and the next step is shown.
 5. **If you get stuck or want to retry:**
    - `make reset`: re-break the current level and try again.
    - `make solve`: apply the reference solution (instructor only).
 6. **Move on:** `make start LEVEL=level-02` (then `level-03`, `level-04`). Starting a level removes the other levels' namespaces, so only one scenario is live at a time.
 7. **Finish:** `make cleanup` tears down the cluster and removes the local state.
+
+#### Running a CLI agent (outside the repo)
+
+A CLI agent started in the repository root reads `AGENTS.md`, `hints.md`, `solution/` and `verify.sh`, which gives away the fix and defeats the exercise. Keep the repo for `make` and run the agent elsewhere, pointed at the cluster through an absolute `KUBECONFIG`:
+
+```bash
+# In the repository root: pin the cluster, then leave the repo
+export KUBECONFIG="$(pwd)/kind/.kube/config"
+mkdir -p ~/escape-room-agent && cd ~/escape-room-agent
+opencode   # or your CLI agent of choice, with its read-only config saved in this directory
+```
+
+Keep one terminal in the repo for `make` and a second one in the scratch directory for the agent.
 
 All levels run locally through `make` targets (the harness behind them is `scripts/escape-room.sh`):
 
@@ -83,20 +97,34 @@ make cleanup                   # tear down the Kind cluster
 > **Kubeconfig:** `make setup` writes a repo-local kubeconfig to `kind/.kube/config` (gitignored, removed by `make cleanup`). Every `make` target and `verify.sh` uses it automatically, so your current `kubectl` context is never touched. To run your own `kubectl` commands against the escape-room cluster, point your shell at it from the repository root:
 >
 > ```bash
-> export KUBECONFIG="$PWD/kind/.kube/config"
+> export KUBECONFIG="$(pwd)/kind/.kube/config"
 > ```
 
-For instructors and contributors, `Makefile` also provides presentation and validation workflows:
+Run `make help` for the full target list, grouped into level-running and contributor targets. For instructors and contributors, `Makefile` also provides presentation and validation workflows:
 
 ```bash
 make setup-dev          # install contributor deps (shellcheck, Slidev, Playwright Chromium, agent skills)
 make slides             # launch the live Slidev presentation (http://localhost:3030)
 make slides-export      # build and export the presentation deck to PDF
+make slides-nexthink    # Nexthink meetup variant (Halloween theme, presenters, Nexthink and hiring slides)
+make slides-nexthink-export  # export the Nexthink variant to PDF
 make validate           # run shellcheck + permission (750) + relative-path checks
 make test LEVEL=all     # run end-to-end smoke tests across all 4 levels (or LEVEL=level-01)
 ```
 
 `start <level>` removes the namespaces of all other levels, so only one scenario is live at a time. Levels 02 and 04 ship small apps that `start` builds and loads into the cluster for you (no registry needed).
+
+---
+
+## AI plugin
+
+`plugins/k8s-troubleshooting/` bundles a read-only troubleshooting skill and a guarded `kubernetes-mcp-server` config (read-only, Secrets denied; it uses your session's `KUBECONFIG`). Install it from this checkout into Claude Code with:
+
+```bash
+make plugin-install      # remove with: make plugin-uninstall
+```
+
+Then start Claude Code from a scratch directory outside the repo. Other CLI tools (Copilot CLI, opencode) are a TODO in [`docs/plugin-installation.md`](docs/plugin-installation.md). Requires `npx` for the MCP server.
 
 ---
 
@@ -108,6 +136,14 @@ kubernetes-escape-room/
 ├── README.md                        # Project overview & quickstart
 ├── Makefile                         # Task runner for slides, linting, validation & smoke tests
 ├── .mcp.json                        # Root Slidev MCP server config (CLI/IDE clients)
+├── .claude-plugin/
+│   └── marketplace.json             # Local marketplace so `make plugin-install` can install the plugin
+├── plugins/
+│   └── k8s-troubleshooting/         # Plugin: troubleshooting skill + read-only MCP config
+│       ├── .claude-plugin/plugin.json
+│       ├── .mcp.json
+│       ├── config/mcp-config.toml
+│       └── skills/k8s-troubleshooting/SKILL.md
 ├── skills-lock.json                 # Agent skills lockfile
 ├── .agents/
 │   ├── skills/
@@ -132,9 +168,16 @@ kubernetes-escape-room/
     ├── presentation/
     │   ├── README.md                # Slidev + MCP contributor guide
     │   ├── package.json             # Slidev dependencies & scripts
-    │   ├── slides.md                # Workshop presentation deck (M6)
+    │   ├── slides.md                # Workshop presentation deck (M6): cover + shared content
     │   ├── style.css                # Deck theme (colors, cards, chips)
-    │   └── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── global-bottom.vue        # Slide numbers (<n>/<total>)
+    │   ├── shared/
+    │   │   └── workshop.md          # Slides and speaker notes shared by both decks
+    │   └── nexthink/                # Nexthink meetup variant (own entry, theme and assets)
+    │       ├── slides.md            # Presenters + Nexthink intro, shared slides, hiring slide
+    │       ├── style.css            # Halloween theme (also used by the PDF export)
+    │       ├── global-bottom.vue    # Progress bar + slide numbers
+    │       └── public/              # Hiring QR code
     ├── sessions/
     │   ├── 00-milestones.md         # Milestone tracker & review gates
     │   ├── 01-milestone-01.md       # Session 1: Core harness & cluster setup
@@ -144,10 +187,14 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 09-kubeconfig-paths-make-help.md  # Session 9: Absolute KUBECONFIG paths & grouped make help
+    │   ├── 10-k8s-plugin.md                  # Session 10: k8s-troubleshooting plugin
+    │   └── 11-nexthink-slides.md             # Session 11: Nexthink meetup slides
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
+    ├── plugin-installation.md       # Installing the k8s-troubleshooting plugin (Claude Code; other CLIs TODO)
     └── pre-workshop-checklist.md    # Instructor & attendee pre-event checklist (M6)
 ```
 
