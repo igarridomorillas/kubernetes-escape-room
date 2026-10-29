@@ -120,7 +120,8 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5 log: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6 log: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7 log: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8 log: Agent-ready ai-assist prompts & optional glow rendering
+    │   └── 09-kubeconfig-paths-make-help.md  # Session 9 log: Absolute KUBECONFIG paths & grouped make help
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources, established vs emerging (M5)
@@ -348,7 +349,8 @@ exit 0
 - **Subdirectory isolation (`docs/presentation/`):** Keep Slidev's `package.json` and `slides.md` (the generated `package-lock.json` is gitignored) inside `docs/presentation/` so the repository root remains free of Node.js runtime dependencies for attendees running `./scripts/escape-room.sh`.
 - **`npx` MCP binary resolution (`--prefix docs/presentation`):** On npm, the Slidev CLI package is `@slidev/cli` (which installs the local `slidev` binary into `docs/presentation/node_modules/.bin/slidev`); there is no standalone `slidev` package on the npm registry. Consequently, any MCP configuration or command executed from the repository root **must** pass `--prefix docs/presentation` (`npx --prefix docs/presentation slidev mcp docs/presentation/slides.md`).
 - **Slidev PDF export prerequisites (`playwright-chromium`):** `slidev export` requires both `"playwright-chromium"` in `docs/presentation/package.json` and the Chromium browser binary installed via `npx --prefix docs/presentation playwright install chromium`. `make setup-dev` installs both (and restores the pinned agent skills from `skills-lock.json`); `make slides-export` runs `setup-dev` if the dependencies are missing and builds the deck (`slidev build`) before exporting.
-- **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets.
+- **Root `Makefile` conventions:** Keep `Makefile` targets concise and parameterized (`make start LEVEL=level-XX`, `make test LEVEL=level-XX` or `LEVEL=all`, `make setup-dev`, `make slides`, `make slides-export`, `make lint`, `make check`, `make validate`) rather than duplicating per-level targets. `make help` groups targets with `##@ <section>` markers ("Build & dev (contributors)" and "Run the levels (attendees)"); keep each section contiguous in the file and tag every new target with `## description`.
+- **Absolute `KUBECONFIG` (learned from session 09):** docs, slides and prompts always use `KUBECONFIG="$(pwd)/kind/.kube/config"` from the repository root, never `kind/.kube/config`. Config files that cannot expand shell (`mcp-config.toml`, MCP client JSON) use a `<repo-root>` placeholder with a note to fill it from `pwd`.
 
 ---
 

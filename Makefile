@@ -10,14 +10,19 @@ SLIDES_DIR := docs/presentation
 LEVEL ?= level-01
 ALL_LEVELS := level-01 level-02 level-03 level-04
 
+##@ General
 help: ## Show this help menu
 	@echo ""
 	@echo "Kubernetes Escape Room — Makefile Targets"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"} \
+		/^##@/ {sub(/^##@ */, ""); if ($$0 != sec) {sec = $$0; printf "\n\033[1m%s\033[0m\n", sec}} \
+		/^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 
 # ─── Contributor & Presentation Setup ─────────────────────────────────────────
+
+##@ Build & dev (contributors)
 
 setup-dev: ## Install contributor/dev requirements (shellcheck, Slidev, Playwright & agent skills)
 	@if ! command -v shellcheck >/dev/null 2>&1; then \
@@ -70,38 +75,6 @@ check: ## Enforce script permissions (chmod 750; git only tracks 755) and no har
 
 validate: lint check ## Run all static validations (lint + check)
 
-# ─── Cluster & Scenario Lifecycle ─────────────────────────────────────────────
-
-setup: ## Create Kind cluster 'escape-room' and install Cilium CNI
-	$(HARNESS) setup
-
-cleanup: ## Tear down Kind cluster and clean local state
-	$(HARNESS) cleanup
-
-prepare: ## Create cluster, pull every scenario image, build app images
-	$(HARNESS) prepare
-
-start: ## Start a level (e.g., make start LEVEL=level-01)
-	$(HARNESS) start $(LEVEL)
-
-status: ## Show active scenario and pod statuses
-	$(HARNESS) status
-
-hint: ## Display the next progressive hint (1 -> 2 -> 3)
-	$(HARNESS) hint
-
-ai-assist: ## Show the spoiler-free AI copilot tip for the active level
-	$(HARNESS) ai-assist
-
-verify: ## Run the active level's in-cluster verification probe
-	$(HARNESS) verify
-
-solve: ## Apply the reference solution for the active level (instructor only)
-	$(HARNESS) solve
-
-reset: ## Re-inject the active level's broken state
-	$(HARNESS) reset
-
 # ─── End-to-End Level Smoke Testing ───────────────────────────────────────────
 
 test: ## DESTRUCTIVE: smoke-test levels, resets .room-state (make test LEVEL=level-01 or LEVEL=all)
@@ -131,3 +104,39 @@ test: ## DESTRUCTIVE: smoke-test levels, resets .room-state (make test LEVEL=lev
 	@if [[ "$(LEVEL)" == "all" ]]; then \
 		echo "🎉 All levels (01–04) passed end-to-end smoke testing!"; \
 	fi
+
+# ─── Cluster & Scenario Lifecycle ─────────────────────────────────────────────
+
+##@ Run the levels (attendees)
+
+setup: ## Create Kind cluster 'escape-room' and install Cilium CNI
+	$(HARNESS) setup
+
+cleanup: ## Tear down Kind cluster and clean local state
+	$(HARNESS) cleanup
+
+prepare: ## Create cluster, pull every scenario image, build app images
+	$(HARNESS) prepare
+
+start: ## Start a level (e.g., make start LEVEL=level-01)
+	$(HARNESS) start $(LEVEL)
+
+status: ## Show active scenario and pod statuses
+	$(HARNESS) status
+
+hint: ## Display the next progressive hint (1 -> 2 -> 3)
+	$(HARNESS) hint
+
+ai-assist: ## Show the spoiler-free AI copilot tip for the active level
+	$(HARNESS) ai-assist
+
+verify: ## Run the active level's in-cluster verification probe
+	$(HARNESS) verify
+
+reset: ## Re-inject the active level's broken state
+	$(HARNESS) reset
+
+##@ Instructor
+
+solve: ## Apply the reference solution for the active level (instructor only)
+	$(HARNESS) solve

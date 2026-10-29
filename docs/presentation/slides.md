@@ -370,7 +370,7 @@ layout: default
 <div class="card"><h4><carbon-security /> Ground rules &amp; help ladder</h4>
 <ul class="small">
   <li>One namespace per level (<code>escape-level-01</code> … <code>03</code>)</li>
-  <li>For your own <code>kubectl</code>: <code>export KUBECONFIG=kind/.kube/config</code> to target only the room</li>
+  <li>For your own <code>kubectl</code>: <code>export KUBECONFIG="$(pwd)/kind/.kube/config"</code> to target only the room</li>
   <li><code>verify</code> probes the service from inside the cluster</li>
   <li><b>Help ladder:</b> <code>hint</code> (concept, then commands, then a nudge to <code>ai-assist</code>), then <code>ai-assist</code> (free, spoiler-free prompt)</li>
 </ul></div>

@@ -83,10 +83,10 @@ make cleanup                   # tear down the Kind cluster
 > **Kubeconfig:** `make setup` writes a repo-local kubeconfig to `kind/.kube/config` (gitignored, removed by `make cleanup`). Every `make` target and `verify.sh` uses it automatically, so your current `kubectl` context is never touched. To run your own `kubectl` commands against the escape-room cluster, point your shell at it from the repository root:
 >
 > ```bash
-> export KUBECONFIG="$PWD/kind/.kube/config"
+> export KUBECONFIG="$(pwd)/kind/.kube/config"
 > ```
 
-For instructors and contributors, `Makefile` also provides presentation and validation workflows:
+Run `make help` for the full target list, grouped into level-running and contributor targets. For instructors and contributors, `Makefile` also provides presentation and validation workflows:
 
 ```bash
 make setup-dev          # install contributor deps (shellcheck, Slidev, Playwright Chromium, agent skills)
@@ -144,7 +144,8 @@ kubernetes-escape-room/
     │   ├── 05-milestone-05.md       # Session 5: AI-assisted troubleshooting best practices
     │   ├── 06-level-04.md           # Session 6: Bonus Level 04 — The Ghost in the Microservices
     │   ├── 07-milestone-06.md       # Session 7: Workshop presentation, docs & pre-event readiness
-    │   └── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   ├── 08-ai-assist-prompts.md  # Session 8: Agent-ready ai-assist prompts & optional glow rendering
+    │   └── 09-kubeconfig-paths-make-help.md  # Session 9: Absolute KUBECONFIG paths & grouped make help
     ├── ai-prompts-cheatsheet.md     # One-page A4 SRE Copilot cheatsheet (M5/M6)
     ├── ai-exercises.md              # Instructor guide: bad vs good prompts per level, challenge exercise (M5)
     ├── ai-research-notes.md         # Cited sources on AI-assisted troubleshooting (M5)
