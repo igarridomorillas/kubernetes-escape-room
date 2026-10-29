@@ -72,7 +72,9 @@ kubernetes-escape-room/
 │   └── plugins/
 │       └── slidev/                  # Antigravity workspace plugin (plugin.json + mcp_config.json)
 ├── scripts/
-│   └── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   ├── escape-room.sh               # Main CLI harness implementation (executable Bash, 750)
+│   └── assets/
+│       └── incident-page.mp3        # Pager sound played by `start` (optional, macOS `afplay`)
 ├── .room-state                      # Runtime state (gitignored)
 ├── kind/
 │   ├── cluster-config.yaml          # Kind cluster definition (disableDefaultCNI)
@@ -362,6 +364,7 @@ exit 0
 - `start <level>` builds `scenarios/<level>-*/app/` when it contains a `Dockerfile` and loads the image into the kind cluster (`escape-room/<level>-app:1.0.0`, e.g. `escape-room/level-02-app:1.0.0`, `escape-room/level-04-app:1.0.0`), so no external registry is needed. Manifests reference that tag with `imagePullPolicy: IfNotPresent`. `reset` reuses the loaded image.
 - `start` and `reset` wait (via `wait_for_level_rollout`, currently `level-03` and `level-04`; level 01 must stay broken) up to 120s for the Deployments to roll out before returning, so an immediate `verify` reports the real fault rather than "not ready". `solve` prints a warning (instead of silently continuing) if its rollout does not finish in 120s.
 - `verify` success appends the level to `COMPLETED_LEVELS` (exact match, no substring grep) and prints a "What's next?" block (`make start LEVEL=<next-level>` when the next level's scenario directory exists, otherwise a "no further levels yet" note, plus `make reset` and `make cleanup`).
+- `start <level>` plays `scripts/assets/incident-page.mp3` with `afplay` in the background when it shows the incident alert. It is optional: skipped silently when `afplay` is missing (non-macOS) or the file is absent. `reset` does not play it.
 - `ai-assist` prints `scenarios/<level>-*/ai-assist.md` for the current level through `render_markdown` (no content parsing). It is independent of `HINT_LEVEL` and never changes `.room-state`. `ai-assist.md` follows the hint discipline: no fix, no root cause, no correct values. It is a separate file from `hints.md` on purpose, since `extract_hint` prints everything under a hint heading. `start` lists the command in its "Useful commands".
 - `hint` advances `HINT_LEVEL` from 1 to 3. Once all 3 are used it prints the "already used all 3 hints" warning (with the `make solve` note) and shows Hint 3 again, without changing `HINT_LEVEL`.
 - `render_markdown` (stdin → stdout) pipes `incident.md`, hints and `ai-assist.md` through `glow` (minimal zero-margin, zero-padding style embedded in the function, `-w 0`, so selected text pastes back exactly) when stdout is a terminal, `NO_COLOR` is unset and `glow` is installed; otherwise (or if glow itself fails) it is plain `cat`. `glow` is an optional prerequisite (listed as optional in `README.md` and `docs/pre-workshop-checklist.md`); the harness never installs it and never requires it.
