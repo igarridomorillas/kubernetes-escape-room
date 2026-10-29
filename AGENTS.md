@@ -384,6 +384,7 @@ exit 0
 - **Progress bar.** Teleport it to `body` with `position: fixed` so letterboxing and small windows cannot hide or shrink it, and hide it in the presenter view (`isPresenter`), which has its own bars.
 - **Respect `prefers-reduced-motion` only for flashing effects.** Hiding decorations for it made them look broken on a Mac with Reduce Motion on.
 - **Keep decorations minimal.** Colours, glowing titles, cobweb, moon, the pumpkin on the first and last slide and the bar. Fog, bats and ghosts were tried and removed.
+- **Spacing inside cards.** `.card p` has no margin; give multi-paragraph cards a scoped class (e.g. `.card.bio`) rather than changing `.card`. Mirror a left-facing emoji with an inline `transform:scaleX(-1)` span.
 - **Speaker notes carry instructor-only facts** (root causes, traps, safety checks): update them together with `docs/ai-exercises.md`, `hints.md` and `solution/`.
 
 ### Plugin rules (learned from session 10)

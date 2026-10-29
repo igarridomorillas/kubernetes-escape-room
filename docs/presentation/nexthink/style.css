@@ -103,6 +103,10 @@
 .card.bad h4 { color: var(--er-bad); }
 .card.warn h4 { color: var(--er-warn); }
 .card p, .card ul, .card ol { margin: 0; }
+.card.bio .chip { margin-top: 0.1rem; }
+.card.bio p { line-height: 1.45; }
+.card.bio .chip + p { margin-top: 0.8rem; }
+.card.bio p + p { margin-top: 0.7rem; }
 .card ul, .card ol { padding-left: 1.2rem; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: stretch; }

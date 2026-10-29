@@ -37,6 +37,8 @@
 8. **Slide 12 overflowed in the original PDF.** The Do/Don't cards were clipped. The compact `.body.lift` rules (gap, card padding, list spacing) fix it in both decks.
 9. **Speaker notes are instructor material.** They carry the root causes, the 504 to 502 progression, the verification-order trap and the unsafe shortcuts, so they must stay in sync with `docs/ai-exercises.md`, the `hints.md` files and `solution/`.
 10. **No agent attribution.** Commits and PR descriptions carry no `Co-Authored-By` trailer or "Generated with" footer.
+11. **Stacked paragraphs in a card need explicit spacing.** `.card p` has `margin: 0`, so consecutive paragraphs touch. The speakers slide uses a scoped `.card.bio` class (chip gap, `p + p` margin, line height) instead of changing `.card` for every slide. Keep that slide's text short: one emoji on the last paragraph of each bio, no bottom tip box.
+12. **Flip an emoji with CSS, not another glyph.** The runner emoji faces left; `<span style="display:inline-block;transform:scaleX(-1)">` mirrors it everywhere, while the right-facing ZWJ variant does not render on every platform.
 
 ## ✅ Verification
 
